@@ -6,7 +6,6 @@
 <meta name="theme-color" content="#080810">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ליגת ווינר סל">
 <title>ניחוש מנצחת · ליגת ווינר סל</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -18,183 +17,72 @@
   }
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; overflow: hidden; }
   #app { height: 100vh; display: flex; flex-direction: column; position: relative; }
-
-  .bg-glow {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  .bg-glow { position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background: radial-gradient(ellipse 60% 40% at 20% 10%, #ff450012, transparent),
-                radial-gradient(ellipse 50% 50% at 80% 80%, #ffd70010, transparent);
-  }
-
-  .header {
-    position: relative; z-index: 10;
-    background: #0d0d1a; border-bottom: 1px solid var(--border);
-    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
-    flex-shrink: 0;
-  }
-  .header-ball { font-size: 28px; }
-  .header-title { font-size: 18px; font-weight: 800; }
-  .header-sub { font-size: 11px; color: #ffd70099; margin-top: 2px; }
-  .notif-btn {
-    font-size: 20px; background: #ffffff10; border: 1px solid #ffffff20;
-    border-radius: 12px; width: 42px; height: 42px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-  }
+                radial-gradient(ellipse 50% 50% at 80% 80%, #ffd70010, transparent); }
+  .header { position: relative; z-index: 10; background: #0d0d1a; border-bottom: 1px solid var(--border);
+    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .notif-btn { font-size: 20px; background: #ffffff10; border: 1px solid #ffffff20; border-radius: 12px;
+    width: 42px; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
   .notif-btn.on { background: #ffd70022; border-color: #ffd70066; }
-
   .content { flex: 1; overflow-y: auto; padding: 14px; position: relative; z-index: 1; padding-bottom: 80px; }
-
-  .nav {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
-    background: #0d0d1a; border-top: 1px solid var(--border); display: flex; flex-shrink: 0;
-  }
-  .nav-btn {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    padding: 10px 0 14px; border: none; background: transparent;
-    color: #ffffff44; cursor: pointer; font-family: inherit;
-    position: relative; transition: color 0.2s; font-size: 10px; font-weight: 600;
-  }
+  .nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; background: #0d0d1a; border-top: 1px solid var(--border); display: flex; flex-shrink: 0; }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 14px; border: none;
+    background: transparent; color: #ffffff44; cursor: pointer; font-family: inherit; position: relative; transition: color 0.2s; font-size: 10px; font-weight: 600; }
   .nav-btn.active { color: var(--gold); }
   .nav-icon { font-size: 20px; margin-bottom: 2px; }
-  .live-dot {
-    position: absolute; top: 8px; right: calc(50% - 12px);
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--orange); box-shadow: 0 0 6px var(--orange);
-    animation: blink 1.5s infinite;
-  }
-
-  .toast {
-    position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
-    z-index: 999; padding: 12px 20px; border-radius: 14px;
-    font-size: 13px; font-weight: 700; color: #fff;
-    box-shadow: 0 4px 24px #00000066; white-space: nowrap;
-    animation: slideDown 0.3s ease; pointer-events: none;
-  }
-
+  .live-dot { position: absolute; top: 8px; right: calc(50% - 12px); width: 7px; height: 7px; border-radius: 50%;
+    background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: blink 1.5s infinite; }
+  .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 999; padding: 12px 20px;
+    border-radius: 14px; font-size: 13px; font-weight: 700; color: #fff; box-shadow: 0 4px 24px #00000066;
+    white-space: nowrap; animation: slideDown 0.3s ease; pointer-events: none; }
   .pills { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
   .pills::-webkit-scrollbar { display: none; }
-  .pill {
-    flex-shrink: 0; padding: 8px 14px; border-radius: 12px;
-    border: 1px solid var(--border); background: #ffffff08;
-    color: #ffffff66; font-size: 13px; font-weight: 700;
-    cursor: pointer; font-family: inherit; transition: all 0.2s;
-  }
-  .pill.active {
-    background: linear-gradient(135deg, var(--orange), #ff8c00);
-    border-color: transparent; color: #fff;
-    box-shadow: 0 4px 20px #ff450044;
-  }
-
-  .section-label {
-    font-size: 11px; font-weight: 700; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 1px;
-    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
-  }
-
-  .card {
-    background: linear-gradient(135deg, var(--card), var(--card2));
-    border-radius: 18px; border: 1px solid var(--border);
-    padding: 14px 16px; margin-bottom: 12px;
-    box-shadow: 0 4px 20px #00000030;
-  }
+  .pill { flex-shrink: 0; padding: 8px 14px; border-radius: 12px; border: 1px solid var(--border);
+    background: #ffffff08; color: #ffffff66; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .pill.active { background: linear-gradient(135deg, var(--orange), #ff8c00); border-color: transparent; color: #fff; box-shadow: 0 4px 20px #ff450044; }
+  .section-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .card { background: linear-gradient(135deg, var(--card), var(--card2)); border-radius: 18px; border: 1px solid var(--border);
+    padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 20px #00000030; }
   .card.filled { border-color: #ffd70030; box-shadow: 0 4px 24px #ffd70015; }
-  .card.live-card { border-color: #ff450055; box-shadow: 0 0 24px #ff450020; }
-  .card-meta {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 12px; color: #ffffff44; margin-bottom: 12px;
-  }
-  .round-tag {
-    background: #ff450022; color: #ff8c00;
-    border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700;
-  }
-  .live-chip {
-    background: #ff450022; color: var(--orange);
-    border-radius: 8px; padding: 2px 10px; font-size: 12px; font-weight: 800;
-  }
-
-  /* Teams row for winner-pick mode */
+  .card-meta { display: flex; justify-content: center; margin-bottom: 12px; }
+  .round-tag { background: #ff450022; color: #ff8c00; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+  .live-chip { background: #ff450022; color: var(--orange); border-radius: 8px; padding: 2px 10px; font-size: 12px; font-weight: 800; }
   .teams-pick-row { display: flex; align-items: center; gap: 8px; }
-  .team-pick-btn {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    gap: 6px; padding: 12px 8px; border-radius: 14px;
-    border: 2px solid #ffffff15; background: #ffffff05;
-    cursor: pointer; font-family: inherit; transition: all 0.2s;
-    position: relative;
-  }
+  .team-pick-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px;
+    border-radius: 14px; border: 2px solid #ffffff15; background: #ffffff05; cursor: pointer; font-family: inherit; transition: all 0.2s; position: relative; }
   .team-pick-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .team-pick-btn.selected-home {
-    border-color: var(--team-color, #ff4500);
-    background: color-mix(in srgb, var(--team-color, #ff4500) 15%, transparent);
-    box-shadow: 0 0 18px color-mix(in srgb, var(--team-color, #ff4500) 40%, transparent);
-  }
-  .team-pick-btn.selected-away {
-    border-color: var(--team-color, #3b82f6);
-    background: color-mix(in srgb, var(--team-color, #3b82f6) 15%, transparent);
-    box-shadow: 0 0 18px color-mix(in srgb, var(--team-color, #3b82f6) 40%, transparent);
-  }
-  .team-badge {
-    width: 42px; height: 42px; border-radius: 12px; border: 2px solid;
-    display: flex; align-items: center; justify-content: center; font-size: 22px;
-  }
-  .team-name { font-size: 11px; font-weight: 700; color: #ffffffcc; text-align: center; }
+  .team-pick-btn.sel-home { border-color: var(--tc, #ff4500); background: color-mix(in srgb, var(--tc, #ff4500) 15%, transparent); box-shadow: 0 0 18px color-mix(in srgb, var(--tc, #ff4500) 40%, transparent); }
+  .team-pick-btn.sel-away { border-color: var(--tc, #3b82f6); background: color-mix(in srgb, var(--tc, #3b82f6) 15%, transparent); box-shadow: 0 0 18px color-mix(in srgb, var(--tc, #3b82f6) 40%, transparent); }
+  .team-badge { width: 44px; height: 44px; border-radius: 12px; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .team-name { font-size: 11px; font-weight: 700; color: #ffffffcc; text-align: center; line-height: 1.3; }
   .team-label { font-size: 10px; color: #ffffff33; }
-  .check-badge {
-    position: absolute; top: -6px; right: -6px;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: var(--green); display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 900;
-  }
-
-  .vs-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
-  .vs-text { font-size: 14px; font-weight: 900; color: #ffffff22; }
-  .game-time { font-size: 12px; color: #ffd700bb; font-weight: 700; }
-
-  .pred-tag {
-    margin-top: 10px; font-size: 12px; color: #ffd700aa;
-    text-align: center; font-weight: 700;
-    padding-top: 8px; border-top: 1px solid #ffffff0f;
-  }
-
-  /* Final score */
-  .final-score { display: flex; align-items: center; gap: 8px; }
-  .final-num { font-size: 28px; font-weight: 900; }
-
-  /* Live score */
-  .live-score-box { display: flex; align-items: center; gap: 8px; }
-  .live-num { font-size: 30px; font-weight: 900; transition: all 0.3s; }
+  .check-badge { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--green); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; }
+  .vs-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .vs-text { font-size: 16px; font-weight: 900; color: #ffffff22; }
+  .pred-tag { margin-top: 10px; font-size: 12px; color: #ffd700aa; text-align: center; font-weight: 700; padding-top: 8px; border-top: 1px solid #ffffff0f; }
+  .winner-badge { font-size: 10px; font-weight: 800; color: var(--gold); background: #ffd70018; border-radius: 6px; padding: 2px 6px; margin-top: 4px; }
+  .live-score-box { display: flex; align-items: center; gap: 10px; }
+  .live-num { font-size: 32px; font-weight: 900; transition: all 0.3s; }
   .live-num.flash { color: var(--gold); transform: scale(1.2); }
-  .dash { font-size: 16px; color: #ffffff22; }
-
+  .dash { font-size: 18px; color: #ffffff33; }
   .submit-area { margin-top: 14px; }
   .prog-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
   .prog-label { font-size: 12px; color: var(--muted); text-align: center; }
   .prog-track { height: 5px; background: #ffffff10; border-radius: 10px; overflow: hidden; }
   .prog-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--gold)); border-radius: 10px; transition: width 0.3s ease; }
-  .submit-btn {
-    width: 100%; padding: 15px; border-radius: 16px; border: none;
-    background: linear-gradient(135deg, var(--orange), var(--gold));
-    color: #000; font-size: 16px; font-weight: 900; cursor: pointer;
-    font-family: inherit; box-shadow: 0 8px 32px #ff450044;
-    letter-spacing: 0.5px; transition: transform 0.1s;
-  }
+  .submit-btn { width: 100%; padding: 15px; border-radius: 16px; border: none; background: linear-gradient(135deg, var(--orange), var(--gold));
+    color: #000; font-size: 16px; font-weight: 900; cursor: pointer; font-family: inherit; box-shadow: 0 8px 32px #ff450044; transition: transform 0.1s; }
   .submit-btn:active { transform: scale(0.97); }
-  .submitted-banner {
-    background: #22c55e18; border: 1px solid #22c55e44;
-    border-radius: 14px; padding: 14px 16px;
-    font-size: 14px; color: var(--green); font-weight: 600; text-align: center;
-    margin-top: 12px;
-  }
-  .empty { text-align: center; color: #ffffff33; padding: 40px 0; font-size: 15px; }
-
-  /* Stats row */
+  .submitted-banner { background: #22c55e18; border: 1px solid #22c55e44; border-radius: 14px; padding: 14px 16px;
+    font-size: 14px; color: var(--green); font-weight: 600; text-align: center; margin-top: 12px; }
+  .empty { text-align: center; color: #ffffff33; padding: 40px 0; font-size: 15px; line-height: 2; }
   .stats-row { display: flex; gap: 10px; margin-bottom: 18px; }
-  .stat-box {
-    flex: 1; background: var(--card); border-radius: 16px; border: 1px solid;
-    padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  }
+  .stat-box { flex: 1; background: var(--card); border-radius: 16px; border: 1px solid; padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .stat-val { font-size: 18px; font-weight: 900; }
   .stat-label { font-size: 9px; color: var(--muted); font-weight: 600; text-align: center; }
-
-  /* History */
   .hist-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
   .hist-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; cursor: pointer; }
   .hist-round { font-size: 14px; font-weight: 700; color: #ffffffcc; }
@@ -202,18 +90,8 @@
   .hist-right { display: flex; align-items: center; gap: 12px; }
   .hist-points { font-size: 18px; font-weight: 900; }
   .hist-details { padding: 0 16px 14px; display: flex; flex-direction: column; gap: 8px; }
-  .hist-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 10px; border-radius: 10px; border: 1px solid; background: #ffffff05;
-    font-size: 12px;
-  }
-
-  /* Leaderboard */
-  .leader-row {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--card); border-radius: 16px;
-    border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 8px;
-  }
+  .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid; background: #ffffff05; font-size: 12px; }
+  .leader-row { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 8px; }
   .leader-row.me { border-color: #3b82f644; background: #3b82f610; }
   .leader-rank { font-size: 20px; width: 30px; text-align: center; }
   .leader-avatar { font-size: 26px; }
@@ -222,148 +100,12 @@
   .leader-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .leader-points { font-size: 22px; font-weight: 900; display: flex; flex-direction: column; align-items: flex-end; }
   .leader-pts { font-size: 10px; font-weight: 600; color: var(--muted); }
-
-  .invite-box {
-    margin-top: 18px; background: linear-gradient(135deg, #1a1a3a, var(--card));
-    border-radius: 18px; border: 1px solid #3b82f633; padding: 18px 16px; text-align: center;
-  }
+  .invite-box { margin-top: 18px; background: linear-gradient(135deg, #1a1a3a, var(--card)); border-radius: 18px; border: 1px solid #3b82f633; padding: 18px 16px; text-align: center; }
   .invite-title { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
   .invite-sub { font-size: 13px; color: #ffffff66; margin-bottom: 14px; }
-  .invite-btn {
-    padding: 10px 24px; border-radius: 12px;
-    border: 1px solid #3b82f666; background: #3b82f622;
-    color: var(--blue); font-size: 14px; font-weight: 700;
-    cursor: pointer; font-family: inherit;
-  }
-
-  /* Registration screen */
-  .reg-overlay {
-    position: fixed; inset: 0; z-index: 100;
-    background: var(--bg); display: flex; flex-direction: column;
-    align-items: center; justify-content: center; padding: 32px 24px;
-  }
-  .reg-overlay.hidden { display: none; }
-  .reg-ball { font-size: 56px; margin-bottom: 16px; animation: bounce 1.5s infinite ease-in-out; }
-  .reg-title { font-size: 26px; font-weight: 900; margin-bottom: 6px; text-align: center; }
-  .reg-sub { font-size: 14px; color: #ffffff66; margin-bottom: 32px; text-align: center; }
-  .reg-avatars {
-    display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; justify-content: center;
-  }
-  .avatar-btn {
-    width: 52px; height: 52px; border-radius: 16px; font-size: 26px;
-    border: 2px solid #ffffff15; background: #ffffff08; cursor: pointer;
-    transition: all 0.15s; display: flex; align-items: center; justify-content: center;
-  }
+  .invite-btn { padding: 10px 24px; border-radius: 12px; border: 1px solid #3b82f666; background: #3b82f622; color: var(--blue); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .avatar-btn { width: 52px; height: 52px; border-radius: 16px; font-size: 26px; border: 2px solid #ffffff15; background: #ffffff08; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
   .avatar-btn.picked { border-color: var(--gold); background: #ffd70022; transform: scale(1.15); }
-  .reg-input-wrap { width: 100%; max-width: 320px; margin-bottom: 20px; position: relative; }
-  .reg-input {
-    width: 100%; padding: 16px 18px; border-radius: 16px;
-    border: 2px solid #ffffff20; background: #ffffff08;
-    color: #fff; font-size: 18px; font-family: inherit;
-    outline: none; text-align: right; transition: border-color 0.2s;
-  }
-  .reg-input:focus { border-color: var(--gold); }
-  .reg-input::placeholder { color: #ffffff33; }
-  .reg-char-count { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #ffffff33; }
-  .reg-btn {
-    width: 100%; max-width: 320px; padding: 16px; border-radius: 16px; border: none;
-    background: linear-gradient(135deg, var(--orange), var(--gold));
-    color: #000; font-size: 17px; font-weight: 900; cursor: pointer;
-    font-family: inherit; box-shadow: 0 8px 32px #ff450044;
-    transition: transform 0.1s, opacity 0.2s;
-  }
-  .reg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .reg-btn:not(:disabled):active { transform: scale(0.97); }
-
-  .avatar-btn {
-    width: 52px; height: 52px; border-radius: 16px; font-size: 26px;
-    border: 2px solid #ffffff15; background: #ffffff08; cursor: pointer;
-    transition: all 0.15s; display: flex; align-items: center; justify-content: center;
-  }
-  .avatar-btn.picked { border-color: var(--gold); background: #ffd70022; transform: scale(1.15); }
-
-  /* Editor modal */
-  .modal-overlay {
-    position: fixed; inset: 0; z-index: 200; background: #000000bb;
-    display: flex; align-items: flex-end; justify-content: center;
-  }
-  .modal-overlay.hidden { display: none; }
-  .modal-sheet {
-    background: #13132a; border-radius: 24px 24px 0 0;
-    border: 1px solid #ffffff18; border-bottom: none;
-    width: 100%; max-height: 90vh; display: flex; flex-direction: column;
-    animation: slideUp 0.3s ease;
-  }
-  .modal-handle {
-    width: 40px; height: 4px; background: #ffffff22; border-radius: 4px;
-    margin: 12px auto 0;
-  }
-  .modal-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 18px; border-bottom: 1px solid #ffffff10;
-    font-size: 16px; font-weight: 800; flex-shrink: 0;
-  }
-  .modal-close {
-    font-size: 22px; background: none; border: none; color: #ffffff66;
-    cursor: pointer; padding: 4px;
-  }
-  .modal-body { overflow-y: auto; padding: 14px 16px; flex: 1; }
-  .modal-footer { padding: 14px 16px; border-top: 1px solid #ffffff10; flex-shrink: 0; }
-
-  /* Editor game row */
-  .edit-row {
-    background: #0f0f22; border-radius: 14px; border: 1px solid #ffffff10;
-    padding: 12px; margin-bottom: 10px;
-  }
-  .edit-row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .edit-label { font-size: 10px; color: #ffffff44; font-weight: 700; margin-bottom: 4px; }
-  .edit-select, .edit-input {
-    width: 100%; padding: 8px 10px; border-radius: 10px;
-    border: 1px solid #ffffff18; background: #ffffff08;
-    color: #fff; font-size: 13px; font-family: inherit; outline: none;
-    direction: rtl;
-  }
-  .edit-select:focus, .edit-input:focus { border-color: var(--gold); }
-  .edit-col { flex: 1; }
-  .edit-vs { font-size: 13px; font-weight: 900; color: #ffffff22; padding-top: 18px; }
-  .edit-row-bottom { display: flex; gap: 8px; }
-  .edit-del-btn {
-    background: #f8717122; border: 1px solid #f8717144; color: #f87171;
-    border-radius: 10px; padding: 6px 12px; font-size: 12px; font-weight: 700;
-    cursor: pointer; font-family: inherit;
-  }
-  .edit-status-btn {
-    flex: 1; background: #ffffff08; border: 1px solid #ffffff18; color: #ffffffcc;
-    border-radius: 10px; padding: 6px 10px; font-size: 11px; font-weight: 700;
-    cursor: pointer; font-family: inherit; text-align: center;
-  }
-  .edit-status-btn.active { background: #22c55e22; border-color: #22c55e55; color: #22c55e; }
-  .add-game-btn {
-    width: 100%; padding: 12px; border-radius: 14px;
-    border: 1px dashed #ffffff22; background: transparent;
-    color: #ffffff44; font-size: 14px; font-weight: 700;
-    cursor: pointer; font-family: inherit; margin-bottom: 10px;
-    transition: all 0.2s;
-  }
-  .add-game-btn:hover { border-color: var(--gold); color: var(--gold); }
-  .save-games-btn {
-    width: 100%; padding: 14px; border-radius: 14px; border: none;
-    background: linear-gradient(135deg, var(--orange), var(--gold));
-    color: #000; font-size: 15px; font-weight: 900; cursor: pointer;
-    font-family: inherit;
-  }
-  .round-edit-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 10px; margin-top: 16px;
-  }
-  .round-edit-label { font-size: 13px; font-weight: 800; color: var(--gold); }
-  .add-round-btn {
-    background: #ffd70015; border: 1px solid #ffd70033; color: var(--gold);
-    border-radius: 10px; padding: 5px 12px; font-size: 12px; font-weight: 700;
-    cursor: pointer; font-family: inherit;
-  }
-
-  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
   @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
   @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
@@ -371,112 +113,75 @@
 </head>
 <body>
 
-<!-- Registration overlay -->
+<!-- הרשמה -->
 <div id="regOverlay" style="position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;">
   <div style="font-size:56px;margin-bottom:16px;animation:bounce 1.5s infinite ease-in-out">🏀</div>
   <div style="font-size:26px;font-weight:900;margin-bottom:6px;text-align:center">ברוך הבא לליגת ווינר סל!</div>
-  <div style="font-size:14px;color:#ffffff66;margin-bottom:28px;text-align:center">בחר כינוי ואמוג'י — ותתחרה עם חברים</div>
+  <div style="font-size:14px;color:#ffffff66;margin-bottom:28px;text-align:center">בחר כינוי ואמוג׳י — ותתחרה עם חברים</div>
   <div id="avatarPicker" style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;justify-content:center"></div>
   <div style="width:100%;max-width:320px;margin-bottom:20px;position:relative">
-    <input id="nicknameInput" type="text" maxlength="16"
-      placeholder="הכינוי שלך..."
-      oninput="onNicknameInput()"
-      style="width:100%;padding:16px 18px;border-radius:16px;border:2px solid #ffffff20;background:#ffffff08;color:#fff;font-size:18px;font-family:inherit;outline:none;text-align:right;transition:border-color 0.2s;direction:rtl"
+    <input id="nicknameInput" type="text" maxlength="16" placeholder="הכינוי שלך..." oninput="onNicknameInput()"
+      style="width:100%;padding:16px 18px;border-radius:16px;border:2px solid #ffffff20;background:#ffffff08;color:#fff;font-size:18px;font-family:inherit;outline:none;text-align:right;direction:rtl"
       onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
     <span id="charCount" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:11px;color:#ffffff33">0/16</span>
   </div>
   <button id="regBtn" disabled onclick="registerUser()"
-    style="width:100%;max-width:320px;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 8px 32px #ff450044;opacity:0.35;transition:opacity 0.2s,transform 0.1s">
+    style="width:100%;max-width:320px;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 8px 32px #ff450044;opacity:0.35;transition:opacity 0.2s">
     בואו נשחק! 🎯
   </button>
-</div>
-
-<!-- Editor modal -->
-<div id="editorModal" class="modal-overlay hidden">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <span>✏️ עריכת לוח משחקים</span>
-      <button class="modal-close" onclick="closeEditor()">✕</button>
-    </div>
-    <div class="modal-body" id="editorBody"></div>
-    <div class="modal-footer">
-      <button class="save-games-btn" onclick="saveGames()">💾 שמור שינויים</button>
-    </div>
-  </div>
 </div>
 
 <div id="app">
   <div class="bg-glow"></div>
   <div id="toast" class="toast" style="display:none"></div>
-
   <header class="header">
     <div style="display:flex;align-items:center;gap:10px">
-      <span class="header-ball">🏀</span>
+      <span style="font-size:28px">🏀</span>
       <div>
-        <div class="header-title">ליגת ווינר סל</div>
-        <div class="header-sub">ניחוש מנצחת · עונה 2025/26</div>
+        <div style="font-size:18px;font-weight:800">ליגת ווינר סל</div>
+        <div style="font-size:11px;color:#ffd70099;margin-top:2px">ניחוש מנצחת · עונה 2025/26</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="notif-btn" onclick="openEditor()" title="עריכת משחקים" style="font-size:16px">✏️</button>
-      <button class="notif-btn" id="notifBtn" onclick="toggleNotif()">🔕</button>
-    </div>
+    <button class="notif-btn" id="notifBtn" onclick="toggleNotif()">🔕</button>
   </header>
-
   <div class="content" id="content"></div>
-
   <nav class="nav">
-    <button class="nav-btn active" id="tab-predict" onclick="setTab('predict')">
-      <span class="nav-icon">🎯</span>ניחושים
-    </button>
-    <button class="nav-btn" id="tab-live" onclick="setTab('live')">
-      <span class="nav-icon">🔴</span>חי
-      <span class="live-dot"></span>
-    </button>
-    <button class="nav-btn" id="tab-history" onclick="setTab('history')">
-      <span class="nav-icon">📊</span>היסטוריה
-    </button>
-    <button class="nav-btn" id="tab-leaders" onclick="setTab('leaders')">
-      <span class="nav-icon">🏆</span>טבלה
-    </button>
+    <button class="nav-btn active" id="tab-predict" onclick="setTab('predict')"><span class="nav-icon">🎯</span>ניחושים</button>
+    <button class="nav-btn" id="tab-live" onclick="setTab('live')"><span class="nav-icon">🔴</span>חי<span class="live-dot"></span></button>
+    <button class="nav-btn" id="tab-history" onclick="setTab('history')"><span class="nav-icon">📊</span>היסטוריה</button>
+    <button class="nav-btn" id="tab-leaders" onclick="setTab('leaders')"><span class="nav-icon">🏆</span>טבלה</button>
   </nav>
 </div>
 
 <script>
-// ─── TEAMS (ליגת ווינר סל 2025/26 – 14 קבוצות) ───────────────────────────
+// ─── TEAMS ───────────────────────────────────────────────────────────────────
 const TEAMS = [
-  { id:1,  name:'מכבי "Rapyd" תל אביב',        short:'מכבי ת"א',     color:'#FFD700', logo:'🏆' },
-  { id:2,  name:'הפועל "IBI" תל אביב',          short:'הפועל ת"א',    color:'#DC143C', logo:'🦅' },
-  { id:3,  name:'הפועל "מידטאון" ירושלים',      short:'הפועל י-ם',   color:'#FF4500', logo:'🔥' },
-  { id:4,  name:'הפועל "נתנאל" חולון',          short:'חולון',        color:'#1E90FF', logo:'💙' },
-  { id:5,  name:'עירוני "חי מוטורס" נס ציונה',  short:'נס ציונה',    color:'#228B22', logo:'💎' },
-  { id:6,  name:'אליצור "BRIGA" נתניה',         short:'נתניה',        color:'#8B4513', logo:'⚡' },
-  { id:7,  name:'מכבי "קבוצת כנען" רמת גן',     short:'מכבי ר"ג',    color:'#4169E1', logo:'🔵' },
-  { id:8,  name:'הפועל "שלמה" חיפה',            short:'הפועל חיפה',  color:'#20B2AA', logo:'⚓' },
-  { id:9,  name:'בני "PenLink" הרצליה',          short:'הרצליה',      color:'#FF8C00', logo:'🏀' },
-  { id:10, name:'הפועל "Rivulis" גליל עליון',   short:'גליל עליון',  color:'#2E8B57', logo:'🌿' },
-  { id:11, name:'עירוני "לאטי" קריית אתא',      short:'קריית אתא',   color:'#9400D3', logo:'🟣' },
-  { id:12, name:'הפועל "אלטשולר שחם" ב"ש',     short:'באר שבע',     color:'#FF6347', logo:'🌵' },
-  { id:13, name:'הפועל "גילת טלקום" העמק',      short:'הפועל העמק',  color:'#DAA520', logo:'🟡' },
-  { id:14, name:'מכבי "אב-גד" רעננה',           short:'מכבי ר"ן',    color:'#00CED1', logo:'🌊' },
+  { id:1,  short:'מכבי ת"א',     color:'#FFD700', logo:'🏆' },
+  { id:2,  short:'הפועל ת"א',    color:'#DC143C', logo:'🦅' },
+  { id:3,  short:'הפועל י-ם',    color:'#FF4500', logo:'🔥' },
+  { id:4,  short:'חולון',         color:'#1E90FF', logo:'💙' },
+  { id:5,  short:'נס ציונה',      color:'#228B22', logo:'💎' },
+  { id:6,  short:'נתניה',         color:'#8B4513', logo:'⚡' },
+  { id:7,  short:'מכבי ר"ג',     color:'#4169E1', logo:'🔵' },
+  { id:8,  short:'הפועל חיפה',   color:'#20B2AA', logo:'⚓' },
+  { id:9,  short:'הרצליה',        color:'#FF8C00', logo:'🏀' },
+  { id:10, short:'גליל עליון',    color:'#2E8B57', logo:'🌿' },
+  { id:11, short:'קריית אתא',     color:'#9400D3', logo:'🟣' },
+  { id:12, short:'באר שבע',       color:'#FF6347', logo:'🌵' },
+  { id:13, short:'הפועל העמק',    color:'#DAA520', logo:'🟡' },
+  { id:14, short:'מכבי ר"ן',     color:'#00CED1', logo:'🌊' },
+  { id:15, short:'מכבי ראשל"צ',  color:'#FF69B4', logo:'🌸' },
 ];
 
-// ─── GAMES (לוח משחקים סיבוב 26 – עונה סדירה + בית תחתון) ────────────────
-// סיבוב 26 = המחזור האחרון של העונה הסדירה בית עליון
+// ─── מחזור 26 ────────────────────────────────────────────────────────────────
 const GAMES = [
-  // מחזור 26 – בית עליון (09.05.2026)
-  { id:1,  home:1,  away:3,  date:'09.05', time:'21:00', round:26, status:'upcoming' },
-  { id:2,  home:2,  away:13, date:'09.05', time:'20:10', round:26, status:'live', hs:54, as:49, q:3, clk:'6:12' },
-  { id:3,  home:4,  away:7,  date:'10.05', time:'19:30', round:26, status:'upcoming' },
-  { id:4,  home:5,  away:9,  date:'10.05', time:'19:00', round:26, status:'upcoming' },
-  { id:5,  home:6,  away:11, date:'10.05', time:'19:00', round:26, status:'upcoming' },
-  { id:6,  home:8,  away:12, date:'10.05', time:'19:00', round:26, status:'upcoming' },
-  // מחזור 27 – בית תחתון ופלייאין (16.05.2026 – אינדיקטיבי)
-  { id:7,  home:10, away:14, date:'16.05', time:'19:00', round:27, status:'upcoming' },
-  { id:8,  home:13, away:11, date:'16.05', time:'19:30', round:27, status:'upcoming' },
-  { id:9,  home:12, away:14, date:'17.05', time:'19:00', round:27, status:'upcoming' },
-  { id:10, home:11, away:10, date:'17.05', time:'20:00', round:27, status:'upcoming' },
+  { id:1, home:13, away:2,  round:26, status:'finished', hs:79, as:75 }, // העמק - הפועל ת"א → ניצחה העמק
+  { id:2, home:3,  away:15, round:26, status:'upcoming' },                // הפועל י-ם - ראשל"צ
+  { id:3, home:10, away:4,  round:26, status:'upcoming' },                // גליל עליון - חולון
+  { id:4, home:12, away:5,  round:26, status:'upcoming' },                // באר שבע - נס ציונה
+  { id:5, home:9,  away:6,  round:26, status:'upcoming' },                // הרצליה - נתניה
+  { id:6, home:1,  away:11, round:26, status:'upcoming' },                // מכבי ת"א - קריית אתא
+  { id:7, home:7,  away:14, round:26, status:'upcoming' },                // מכבי ר"ג - מכבי ר"ן
 ];
 
 const LEADERBOARD = [
@@ -490,12 +195,12 @@ const LEADERBOARD = [
 
 const HISTORY = [
   { round:25, date:'02.05', predictions:6, correct:4, points:12, details:[
-    { home:1,away:2,   pick:'home', winner:'home', ok:true  },
-    { home:3,away:4,   pick:'away', winner:'home', ok:false },
-    { home:5,away:6,   pick:'home', winner:'home', ok:true  },
-    { home:7,away:8,   pick:'home', winner:'home', ok:true  },
-    { home:9,away:10,  pick:'away', winner:'away', ok:true  },
-    { home:11,away:12, pick:'home', winner:'away', ok:false },
+    { home:1, away:3,  pick:'home', winner:'home', ok:true  },
+    { home:2, away:4,  pick:'away', winner:'home', ok:false },
+    { home:5, away:12, pick:'home', winner:'home', ok:true  },
+    { home:7, away:9,  pick:'home', winner:'home', ok:true  },
+    { home:10,away:6,  pick:'away', winner:'away', ok:true  },
+    { home:11,away:14, pick:'home', winner:'away', ok:false },
   ]},
   { round:24, date:'25.04', predictions:6, correct:3, points:9,  details:[] },
   { round:23, date:'18.04', predictions:6, correct:5, points:15, details:[] },
@@ -503,25 +208,17 @@ const HISTORY = [
 ];
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
-let currentTab = 'predict';
-let activeRound = 26;
-let predictions = {}; // { gameId: 'home' | 'away' }
-let submitted = {};
-let notifOn = false;
-let liveGames = GAMES.map(g => ({...g}));
-let expandedRound = null;
+let currentTab = 'predict', activeRound = 26, predictions = {}, submitted = {}, notifOn = false;
+let liveGames = GAMES.map(g => ({...g})), expandedRound = null;
 
 const getTeam = id => TEAMS.find(t => t.id === id);
 const getRounds = () => [...new Set(GAMES.map(g => g.round))].sort((a,b) => a-b);
 
-function showToast(msg, color = '#22c55e') {
+function showToast(msg, color='#22c55e') {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.background = color;
-  t.style.display = 'block';
+  t.textContent = msg; t.style.background = color; t.style.display = 'block';
   setTimeout(() => t.style.display = 'none', 3000);
 }
-
 function toggleNotif() {
   notifOn = !notifOn;
   const btn = document.getElementById('notifBtn');
@@ -529,19 +226,16 @@ function toggleNotif() {
   btn.className = 'notif-btn' + (notifOn ? ' on' : '');
   showToast(notifOn ? '🔔 התראות הופעלו!' : '🔕 התראות כובו', notifOn ? '#22c55e' : '#3b82f6');
 }
-
 function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   render();
 }
-
 function setRound(r) { activeRound = r; render(); }
-
 function render() {
   const c = document.getElementById('content');
-  if (currentTab === 'predict')  c.innerHTML = renderPredict();
+  if (currentTab === 'predict')      c.innerHTML = renderPredict();
   else if (currentTab === 'live')    c.innerHTML = renderLive();
   else if (currentTab === 'history') c.innerHTML = renderHistory();
   else if (currentTab === 'leaders') c.innerHTML = renderLeaders();
@@ -549,132 +243,97 @@ function render() {
 
 // ─── PREDICT ─────────────────────────────────────────────────────────────────
 function renderPredict() {
-  const roundGames = GAMES.filter(g => g.round === activeRound && g.status !== 'live');
-  const upcoming = roundGames.filter(g => g.status === 'upcoming');
-  const finished = roundGames.filter(g => g.status === 'finished');
+  const rGames   = GAMES.filter(g => g.round === activeRound);
+  const upcoming = rGames.filter(g => g.status === 'upcoming');
+  const finished = rGames.filter(g => g.status === 'finished');
   const isSubmitted = submitted[activeRound];
   const filled = upcoming.filter(g => predictions[g.id] !== undefined).length;
 
-  let html = `<div class="pills">`;
+  let html = '<div class="pills">';
   getRounds().forEach(r => {
-    html += `<button class="pill ${r === activeRound ? 'active' : ''}" onclick="setRound(${r})">מחזור ${r}</button>`;
+    html += `<button class="pill ${r===activeRound?'active':''}" onclick="setRound(${r})">מחזור ${r}</button>`;
   });
-  html += `</div>`;
+  html += '</div>';
 
   if (upcoming.length > 0) {
-    html += `<div class="section-label">🏀 משחקים קרובים — בחר מנצחת</div>`;
+    html += '<div class="section-label">🏀 בחר מנצחת</div>';
     upcoming.forEach(g => { html += renderGameCard(g, isSubmitted); });
-
     if (!isSubmitted) {
-      const pct = (filled / upcoming.length * 100).toFixed(0);
-      html += `
-        <div class="submit-area">
-          <div class="prog-row">
-            <div class="prog-label">${filled}/${upcoming.length} נבחרו</div>
-            <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
-          </div>
-          <button class="submit-btn" onclick="submitPredictions()">שלח ניחושים 🎯</button>
-        </div>`;
+      const pct = upcoming.length ? (filled / upcoming.length * 100).toFixed(0) : 0;
+      html += `<div class="submit-area">
+        <div class="prog-row">
+          <div class="prog-label">${filled}/${upcoming.length} נבחרו</div>
+          <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+        </div>
+        <button class="submit-btn" onclick="submitPredictions()">שלח ניחושים 🎯</button>
+      </div>`;
     } else {
-      html += `<div class="submitted-banner">✅ ניחושים נשלחו למחזור ${activeRound}! תוצאות יעודכנו לאחר המשחקים.</div>`;
+      html += `<div class="submitted-banner">✅ ניחושים נשלחו למחזור ${activeRound}!</div>`;
     }
   }
 
   if (finished.length > 0) {
-    html += `<div class="section-label" style="margin-top:20px">✅ משחקים שהסתיימו</div>`;
+    html += '<div class="section-label" style="margin-top:20px">✅ תוצאות</div>';
     finished.forEach(g => { html += renderFinishedCard(g); });
   }
 
-  if (upcoming.length === 0 && finished.length === 0) {
-    html += `<div class="empty">אין משחקים למחזור זה</div>`;
-  }
-
+  if (!upcoming.length && !finished.length) html += '<div class="empty">אין משחקים למחזור זה</div>';
   return html;
 }
 
 function renderGameCard(g, locked) {
   const home = getTeam(g.home), away = getTeam(g.away);
   const pick = predictions[g.id];
-  const hasPick = pick !== undefined;
-  const homeSelected = pick === 'home';
-  const awaySelected = pick === 'away';
-
-  const winnerLabel = hasPick
-    ? (pick === 'home' ? `✓ ${home.short} מנצחת` : `✓ ${away.short} מנצחת`)
-    : '';
-
+  const winnerLabel = pick ? (pick==='home' ? `✓ ${home.short} מנצחת` : `✓ ${away.short} מנצחת`) : '';
   return `
-    <div class="card ${hasPick ? 'filled' : ''}">
-      <div class="card-meta">
-        <span>📅 ${g.date}</span>
-        <span class="round-tag">מחזור ${g.round}</span>
-        <span>🕗 ${g.time}</span>
-      </div>
+    <div class="card ${pick!==undefined?'filled':''}">
+      <div class="card-meta"><span class="round-tag">מחזור ${g.round}</span></div>
       <div class="teams-pick-row">
-        <button class="team-pick-btn ${homeSelected ? 'selected-home' : ''}"
-          style="--team-color:${home.color}"
-          ${locked ? 'disabled' : ''}
-          onclick="pickWinner(${g.id},'home')">
-          ${homeSelected ? '<span class="check-badge">✓</span>' : ''}
-          <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88">
-            <span>${home.logo}</span>
-          </div>
+        <button class="team-pick-btn ${pick==='home'?'sel-home':''}" style="--tc:${home.color}"
+          ${locked?'disabled':''} onclick="pickWinner(${g.id},'home')">
+          ${pick==='home'?'<span class="check-badge">✓</span>':''}
+          <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88">${home.logo}</div>
           <span class="team-name">${home.short}</span>
           <span class="team-label">בית</span>
         </button>
-
-        <div class="vs-col">
-          <span class="vs-text">VS</span>
-          <span class="game-time">${g.time}</span>
-        </div>
-
-        <button class="team-pick-btn ${awaySelected ? 'selected-away' : ''}"
-          style="--team-color:${away.color}"
-          ${locked ? 'disabled' : ''}
-          onclick="pickWinner(${g.id},'away')">
-          ${awaySelected ? '<span class="check-badge">✓</span>' : ''}
-          <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88">
-            <span>${away.logo}</span>
-          </div>
+        <div class="vs-col"><span class="vs-text">VS</span></div>
+        <button class="team-pick-btn ${pick==='away'?'sel-away':''}" style="--tc:${away.color}"
+          ${locked?'disabled':''} onclick="pickWinner(${g.id},'away')">
+          ${pick==='away'?'<span class="check-badge">✓</span>':''}
+          <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88">${away.logo}</div>
           <span class="team-name">${away.short}</span>
           <span class="team-label">חוץ</span>
         </button>
       </div>
-      ${hasPick ? `<div class="pred-tag">${winnerLabel}</div>` : ''}
+      ${pick!==undefined?`<div class="pred-tag">${winnerLabel}</div>`:''}
     </div>`;
 }
 
 function renderFinishedCard(g) {
   const home = getTeam(g.home), away = getTeam(g.away);
   const pick = predictions[g.id];
-  const actualWinner = g.hs > g.as ? 'home' : 'away';
+  const winner = g.hs > g.as ? 'home' : 'away';
   let predHtml = '';
   if (pick !== undefined) {
-    const ok = pick === actualWinner;
-    const pickedTeam = pick === 'home' ? home.short : away.short;
-    predHtml = `<div class="pred-tag" style="color:${ok ? '#22c55e' : '#f87171'}">${ok ? `✅ ניחשת נכון! (${pickedTeam})` : `❌ ניחשת: ${pickedTeam}`}</div>`;
+    const ok = pick === winner;
+    predHtml = `<div class="pred-tag" style="color:${ok?'#22c55e':'#f87171'}">${ok?`✅ ניחשת נכון!`:`❌ ניחשת: ${pick==='home'?home.short:away.short}`}</div>`;
   }
   return `
-    <div class="card" style="opacity:0.85">
-      <div class="card-meta">
-        <span>📅 ${g.date}</span>
-        <span style="background:#ffffff15;color:#fff;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700">הסתיים</span>
-      </div>
+    <div class="card" style="opacity:0.9">
+      <div class="card-meta"><span class="round-tag">מחזור ${g.round}</span></div>
       <div class="teams-pick-row">
-        <div class="team-pick-btn" style="border-color:${g.hs>g.as ? home.color+'88' : '#ffffff15'}">
-          <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88">
-            <span>${home.logo}</span>
-          </div>
+        <div class="team-pick-btn" style="border-color:${winner==='home'?home.color+'88':'#ffffff10'}">
+          <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88">${home.logo}</div>
           <span class="team-name">${home.short}</span>
-          <span class="team-label" style="font-size:18px;font-weight:900;color:#fff">${g.hs}</span>
+          <span style="font-size:22px;font-weight:900;color:#fff;margin-top:2px">${g.hs}</span>
+          ${winner==='home'?'<span class="winner-badge">🏆 ניצחה</span>':''}
         </div>
         <div class="vs-col"><span class="dash">—</span></div>
-        <div class="team-pick-btn" style="border-color:${g.as>g.hs ? away.color+'88' : '#ffffff15'}">
-          <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88">
-            <span>${away.logo}</span>
-          </div>
+        <div class="team-pick-btn" style="border-color:${winner==='away'?away.color+'88':'#ffffff10'}">
+          <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88">${away.logo}</div>
           <span class="team-name">${away.short}</span>
-          <span class="team-label" style="font-size:18px;font-weight:900;color:#fff">${g.as}</span>
+          <span style="font-size:22px;font-weight:900;color:#fff;margin-top:2px">${g.as}</span>
+          ${winner==='away'?'<span class="winner-badge">🏆 ניצחה</span>':''}
         </div>
       </div>
       ${predHtml}
@@ -682,29 +341,20 @@ function renderFinishedCard(g) {
 }
 
 function pickWinner(gameId, side) {
-  // Toggle off if same pick
-  if (predictions[gameId] === side) {
-    delete predictions[gameId];
-  } else {
-    predictions[gameId] = side;
-  }
-  // Update progress bar
-  const upcoming = GAMES.filter(x => x.round === activeRound && x.status === 'upcoming');
-  const filled = upcoming.filter(x => predictions[x.id] !== undefined).length;
-  const progFill = document.querySelector('.prog-fill');
-  const progLabel = document.querySelector('.prog-label');
-  if (progFill) progFill.style.width = `${(filled / upcoming.length * 100)}%`;
-  if (progLabel) progLabel.textContent = `${filled}/${upcoming.length} נבחרו`;
-  // Re-render just the card
+  if (predictions[gameId] === side) delete predictions[gameId];
+  else predictions[gameId] = side;
+  const upcoming = GAMES.filter(x => x.round===activeRound && x.status==='upcoming');
+  const filled = upcoming.filter(x => predictions[x.id]!==undefined).length;
+  const pf = document.querySelector('.prog-fill'), pl = document.querySelector('.prog-label');
+  if (pf) pf.style.width = `${filled/upcoming.length*100}%`;
+  if (pl) pl.textContent = `${filled}/${upcoming.length} נבחרו`;
   render();
 }
 
 function submitPredictions() {
-  const upcoming = GAMES.filter(g => g.round === activeRound && g.status === 'upcoming');
-  const filled = upcoming.filter(g => predictions[g.id] !== undefined);
-  if (filled.length < upcoming.length) {
-    showToast('⚠️ בחר מנצחת לכל המשחקים', '#f59e0b');
-    return;
+  const upcoming = GAMES.filter(g => g.round===activeRound && g.status==='upcoming');
+  if (upcoming.filter(g => predictions[g.id]!==undefined).length < upcoming.length) {
+    showToast('⚠️ בחר מנצחת לכל המשחקים', '#f59e0b'); return;
   }
   submitted[activeRound] = true;
   showToast('✅ הניחושים נשלחו! בהצלחה!');
@@ -713,377 +363,153 @@ function submitPredictions() {
 
 // ─── LIVE ────────────────────────────────────────────────────────────────────
 function renderLive() {
-  const live = liveGames.filter(g => g.status === 'live');
-  const upcomingToday = liveGames.filter(g => g.status === 'upcoming' && g.date === '09.05');
-  let html = '';
-
-  if (live.length > 0) {
-    html += `<div class="section-label"><span style="animation:blink 1.5s infinite;display:inline-block">🔴</span> משחקים חיים עכשיו</div>`;
-    live.forEach(g => {
-      const home = getTeam(g.home), away = getTeam(g.away);
-      html += `
-        <div class="card live-card">
-          <div class="card-meta">
-            <span class="live-chip">🔴 חי</span>
-            <span style="color:#ffd700aa;font-size:13px;font-weight:700">רבע ${g.q} · ${g.clk}</span>
+  const live = liveGames.filter(g => g.status==='live');
+  if (!live.length) return '<div class="empty">🏀<br><br>אין משחקים חיים כרגע</div>';
+  let html = '<div class="section-label"><span style="animation:blink 1.5s infinite;display:inline-block">🔴</span> משחקים חיים עכשיו</div>';
+  live.forEach(g => {
+    const home = getTeam(g.home), away = getTeam(g.away);
+    html += `
+      <div class="card" style="border-color:#ff450055;box-shadow:0 0 24px #ff450020">
+        <div class="card-meta" style="justify-content:space-between">
+          <span class="live-chip">🔴 חי</span>
+          <span style="color:#ffd700aa;font-size:13px;font-weight:700">רבע ${g.q} · ${g.clk}</span>
+        </div>
+        <div class="teams-pick-row">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+            <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88">${home.logo}</div>
+            <span class="team-name">${home.short}</span>
           </div>
-          <div class="teams-pick-row">
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-              <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88"><span>${home.logo}</span></div>
-              <span class="team-name">${home.short}</span>
-              <span class="team-label">בית</span>
-            </div>
-            <div class="live-score-box">
-              <span class="live-num" id="live-hs-${g.id}">${g.hs}</span>
-              <span class="dash">—</span>
-              <span class="live-num" id="live-as-${g.id}">${g.as}</span>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-              <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88"><span>${away.logo}</span></div>
-              <span class="team-name">${away.short}</span>
-              <span class="team-label">חוץ</span>
-            </div>
+          <div class="live-score-box">
+            <span class="live-num" id="live-hs-${g.id}">${g.hs}</span>
+            <span class="dash">—</span>
+            <span class="live-num" id="live-as-${g.id}">${g.as}</span>
           </div>
-        </div>`;
-    });
-  }
-
-  if (upcomingToday.length > 0) {
-    html += `<div class="section-label" style="margin-top:18px">🕗 הערב</div>`;
-    upcomingToday.forEach(g => {
-      const home = getTeam(g.home), away = getTeam(g.away);
-      html += `
-        <div class="card" style="opacity:0.7">
-          <div class="teams-pick-row">
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-              <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88"><span>${home.logo}</span></div>
-              <span class="team-name">${home.short}</span>
-            </div>
-            <div class="vs-col">
-              <div class="vs-text">vs</div>
-              <div class="game-time">${g.time}</div>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-              <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88"><span>${away.logo}</span></div>
-              <span class="team-name">${away.short}</span>
-            </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+            <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88">${away.logo}</div>
+            <span class="team-name">${away.short}</span>
           </div>
-        </div>`;
-    });
-  }
-
-  if (live.length === 0 && upcomingToday.length === 0) {
-    html += `<div class="empty">אין משחקים חיים כרגע</div>`;
-  }
+        </div>
+      </div>`;
+  });
   return html;
 }
 
 // ─── HISTORY ─────────────────────────────────────────────────────────────────
 function renderHistory() {
-  const total = HISTORY.reduce((a, h) => a + h.points, 0);
-  const totalCorrect = HISTORY.reduce((a, h) => a + h.correct, 0);
-  const totalPred = HISTORY.reduce((a, h) => a + h.predictions, 0);
-  const pct = Math.round(totalCorrect / totalPred * 100);
-
+  const total = HISTORY.reduce((a,h) => a+h.points, 0);
+  const tc    = HISTORY.reduce((a,h) => a+h.correct, 0);
+  const tp    = HISTORY.reduce((a,h) => a+h.predictions, 0);
+  const pct   = Math.round(tc/tp*100);
   let html = `
     <div class="stats-row">
-      <div class="stat-box" style="border-color:#ffd70044">
-        <span style="font-size:22px">🏅</span>
-        <div class="stat-val" style="color:#ffd700">${total}</div>
-        <div class="stat-label">סה״כ נקודות</div>
-      </div>
-      <div class="stat-box" style="border-color:#22c55e44">
-        <span style="font-size:22px">🎯</span>
-        <div class="stat-val" style="color:#22c55e">${pct}%</div>
-        <div class="stat-label">אחוז הצלחה</div>
-      </div>
-      <div class="stat-box" style="border-color:#3b82f644">
-        <span style="font-size:22px">✅</span>
-        <div class="stat-val" style="color:#3b82f6">${totalCorrect}/${totalPred}</div>
-        <div class="stat-label">ניחושים נכונים</div>
-      </div>
+      <div class="stat-box" style="border-color:#ffd70044"><span style="font-size:22px">🏅</span><div class="stat-val" style="color:#ffd700">${total}</div><div class="stat-label">סה״כ נקודות</div></div>
+      <div class="stat-box" style="border-color:#22c55e44"><span style="font-size:22px">🎯</span><div class="stat-val" style="color:#22c55e">${pct}%</div><div class="stat-label">אחוז הצלחה</div></div>
+      <div class="stat-box" style="border-color:#3b82f644"><span style="font-size:22px">✅</span><div class="stat-val" style="color:#3b82f6">${tc}/${tp}</div><div class="stat-label">ניחושים נכונים</div></div>
     </div>
     <div class="section-label">מחזורים אחרונים</div>`;
-
   HISTORY.forEach(h => {
     const isExp = expandedRound === h.round;
-    const pointColor = h.points >= 12 ? '#22c55e' : h.points >= 8 ? '#ffd700' : '#f87171';
-    let detailsHtml = '';
-    if (isExp && h.details.length > 0) {
+    const pc = h.points>=12?'#22c55e':h.points>=8?'#ffd700':'#f87171';
+    let det = '';
+    if (isExp && h.details.length) {
       h.details.forEach(d => {
-        const home = getTeam(d.home), away = getTeam(d.away);
-        const pickedTeam = d.pick === 'home' ? home.short : away.short;
-        const winnerTeam = d.winner === 'home' ? home.short : away.short;
-        detailsHtml += `
-          <div class="hist-row" style="border-color:${d.ok ? '#22c55e33' : '#f8717133'}">
-            <span style="color:#ffffffcc">${home.short} נגד ${away.short}</span>
-            <span style="color:${d.ok ? '#22c55e' : '#f87171'}">${d.ok ? `✅ ${pickedTeam}` : `❌ ${pickedTeam} (נצחה: ${winnerTeam})`}</span>
-          </div>`;
+        const hm = getTeam(d.home), aw = getTeam(d.away);
+        det += `<div class="hist-row" style="border-color:${d.ok?'#22c55e33':'#f8717133'}">
+          <span style="color:#ffffffcc">${hm.short} נגד ${aw.short}</span>
+          <span style="color:${d.ok?'#22c55e':'#f87171'}">${d.ok?`✅ ${d.pick==='home'?hm.short:aw.short}`:`❌ ${d.pick==='home'?hm.short:aw.short}`}</span>
+        </div>`;
       });
     }
     html += `
       <div class="hist-card">
         <div class="hist-header" onclick="toggleHistory(${h.round})">
-          <div>
-            <div class="hist-round">מחזור ${h.round} · ${h.date}</div>
-            <div class="hist-sub">${h.correct}/${h.predictions} נכון</div>
-          </div>
-          <div class="hist-right">
-            <span class="hist-points" style="color:${pointColor}">+${h.points} נק'</span>
-            <span style="color:#ffffff44;font-size:16px">${isExp ? '▲' : '▼'}</span>
-          </div>
+          <div><div class="hist-round">מחזור ${h.round} · ${h.date}</div><div class="hist-sub">${h.correct}/${h.predictions} נכון</div></div>
+          <div class="hist-right"><span class="hist-points" style="color:${pc}">+${h.points} נק'</span><span style="color:#ffffff44;font-size:16px">${isExp?'▲':'▼'}</span></div>
         </div>
-        ${isExp && h.details.length > 0 ? `<div class="hist-details">${detailsHtml}</div>` : ''}
+        ${isExp&&h.details.length?`<div class="hist-details">${det}</div>`:''}
       </div>`;
   });
-
   return html;
 }
-
-function toggleHistory(round) {
-  expandedRound = expandedRound === round ? null : round;
-  render();
-}
+function toggleHistory(round) { expandedRound = expandedRound===round?null:round; render(); }
 
 // ─── LEADERS ─────────────────────────────────────────────────────────────────
 function renderLeaders() {
-  let html = `<div class="section-label">🏆 לוח מובילים — חברים</div>`;
   const medals = ['🥇','🥈','🥉'];
-  LEADERBOARD.forEach((u, i) => {
-    const rank = i < 3 ? medals[i] : `#${i + 1}`;
-    const ptColor = i === 0 ? '#ffd700' : u.isMe ? '#3b82f6' : '#ffffffcc';
-    html += `
-      <div class="leader-row ${u.isMe ? 'me' : ''}">
-        <div class="leader-rank">${rank}</div>
-        <div class="leader-avatar">${u.avatar}</div>
-        <div class="leader-info">
-          <div class="leader-name">${u.name}${u.isMe ? ' (אני)' : ''}</div>
-          <div class="leader-sub">${u.correct} ניחושים נכונים</div>
-        </div>
-        <div class="leader-points" style="color:${ptColor}">
-          ${u.points}
-          <span class="leader-pts">נק'</span>
-        </div>
-      </div>`;
-  });
-
-  html += `
-    <div class="invite-box">
-      <div class="invite-title">📨 הזמן חברים</div>
-      <div class="invite-sub">שתף את הקישור ותתחרה עם חברים!</div>
-      <button class="invite-btn" onclick="copyLink()">📋 העתק קישור</button>
+  let html = '<div class="section-label">🏆 לוח מובילים — חברים</div>';
+  LEADERBOARD.forEach((u,i) => {
+    const rank = i<3?medals[i]:`#${i+1}`;
+    const pc = i===0?'#ffd700':u.isMe?'#3b82f6':'#ffffffcc';
+    html += `<div class="leader-row ${u.isMe?'me':''}">
+      <div class="leader-rank">${rank}</div>
+      <div class="leader-avatar">${u.avatar}</div>
+      <div class="leader-info"><div class="leader-name">${u.name}${u.isMe?' (אני)':''}</div><div class="leader-sub">${u.correct} ניחושים נכונים</div></div>
+      <div class="leader-points" style="color:${pc}">${u.points}<span class="leader-pts">נק'</span></div>
     </div>`;
+  });
+  html += `<div class="invite-box">
+    <div class="invite-title">📨 הזמן חברים</div>
+    <div class="invite-sub">שתף את הקישור ותתחרה עם חברים!</div>
+    <button class="invite-btn" onclick="copyLink()">📋 העתק קישור</button>
+  </div>`;
   return html;
 }
-
 function copyLink() {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(window.location.href);
-    showToast('📋 הקישור הועתק!', '#3b82f6');
-  } else {
-    showToast('🔗 שתף את הקישור!', '#3b82f6');
-  }
+  if (navigator.clipboard) navigator.clipboard.writeText(window.location.href);
+  showToast('📋 הקישור הועתק!', '#3b82f6');
 }
 
 // ─── LIVE UPDATES ────────────────────────────────────────────────────────────
 setInterval(() => {
   liveGames = liveGames.map(g => {
-    if (g.status !== 'live') return g;
-    if (Math.random() > 0.5) return g;
-    const side = Math.random() > 0.5 ? 'hs' : 'as';
-    const pts = Math.random() > 0.7 ? 3 : Math.random() > 0.5 ? 2 : 1;
-    const updated = { ...g, [side]: g[side] + pts };
-    if (currentTab === 'live') {
-      const el = document.getElementById(`live-${side === 'hs' ? 'hs' : 'as'}-${g.id}`);
-      if (el) {
-        el.textContent = updated[side];
-        el.classList.add('flash');
-        setTimeout(() => el && el.classList.remove('flash'), 600);
-      }
+    if (g.status!=='live'||Math.random()>0.5) return g;
+    const side = Math.random()>0.5?'hs':'as';
+    const pts = Math.random()>0.7?3:Math.random()>0.5?2:1;
+    const updated = {...g, [side]: g[side]+pts};
+    if (currentTab==='live') {
+      const el = document.getElementById(`live-${side}-${g.id}`);
+      if (el) { el.textContent=updated[side]; el.classList.add('flash'); setTimeout(()=>el&&el.classList.remove('flash'),600); }
     }
     return updated;
   });
 }, 3000);
-
-// ─── EDITOR ──────────────────────────────────────────────────────────────────
-let editGames = [];
-let nextGameId = 100;
-
-function openEditor() {
-  editGames = GAMES.map(g => ({...g}));
-  nextGameId = Math.max(...GAMES.map(g => g.id)) + 1;
-  renderEditor();
-  document.getElementById('editorModal').classList.remove('hidden');
-}
-
-function closeEditor() {
-  document.getElementById('editorModal').classList.add('hidden');
-}
-
-function renderEditor() {
-  const rounds = [...new Set(editGames.map(g => g.round))].sort((a,b) => a-b);
-  const teamOptions = TEAMS.map(t => `<option value="${t.id}">${t.short}</option>`).join('');
-  let html = '';
-
-  rounds.forEach(r => {
-    const rGames = editGames.filter(g => g.round === r);
-    html += `
-      <div class="round-edit-header">
-        <span class="round-edit-label">🏀 מחזור ${r}</span>
-        <button class="add-round-btn" onclick="addGame(${r})">+ הוסף משחק</button>
-      </div>`;
-    rGames.forEach(g => {
-      const statuses = ['upcoming','live','finished'];
-      const statusLabels = { upcoming:'קרוב', live:'חי', finished:'הסתיים' };
-      html += `
-        <div class="edit-row" id="erow-${g.id}">
-          <div class="edit-row-top">
-            <div class="edit-col">
-              <div class="edit-label">בית</div>
-              <select class="edit-select" onchange="updateGame(${g.id},'home',this.value)">
-                ${TEAMS.map(t => `<option value="${t.id}" ${t.id===g.home?'selected':''}>${t.short}</option>`).join('')}
-              </select>
-            </div>
-            <div class="edit-vs">נגד</div>
-            <div class="edit-col">
-              <div class="edit-label">חוץ</div>
-              <select class="edit-select" onchange="updateGame(${g.id},'away',this.value)">
-                ${TEAMS.map(t => `<option value="${t.id}" ${t.id===g.away?'selected':''}>${t.short}</option>`).join('')}
-              </select>
-            </div>
-          </div>
-          <div class="edit-row-bottom" style="margin-bottom:8px">
-            <div class="edit-col">
-              <div class="edit-label">תאריך</div>
-              <input class="edit-input" value="${g.date}" placeholder="DD.MM"
-                onchange="updateGame(${g.id},'date',this.value)">
-            </div>
-            <div class="edit-col">
-              <div class="edit-label">שעה</div>
-              <input class="edit-input" value="${g.time}" placeholder="HH:MM"
-                onchange="updateGame(${g.id},'time',this.value)">
-            </div>
-          </div>
-          <div class="edit-row-bottom">
-            ${statuses.map(s => `
-              <button class="edit-status-btn ${g.status===s?'active':''}"
-                onclick="updateGame(${g.id},'status','${s}');renderEditor()">
-                ${statusLabels[s]}
-              </button>`).join('')}
-            <button class="edit-del-btn" onclick="deleteGame(${g.id})">🗑</button>
-          </div>
-        </div>`;
-    });
-  });
-
-  html += `
-    <div class="round-edit-header" style="margin-top:20px">
-      <span class="round-edit-label">➕ מחזור חדש</span>
-    </div>
-    <button class="add-game-btn" onclick="addNewRound()">+ הוסף מחזור חדש</button>`;
-
-  document.getElementById('editorBody').innerHTML = html;
-}
-
-function updateGame(id, field, value) {
-  const g = editGames.find(x => x.id === id);
-  if (!g) return;
-  if (field === 'home' || field === 'away') g[field] = parseInt(value);
-  else g[field] = value;
-}
-
-function deleteGame(id) {
-  editGames = editGames.filter(g => g.id !== id);
-  renderEditor();
-}
-
-function addGame(round) {
-  editGames.push({
-    id: nextGameId++,
-    home: 1, away: 2,
-    date: '', time: '19:00',
-    round, status: 'upcoming'
-  });
-  renderEditor();
-  // Scroll to bottom
-  setTimeout(() => {
-    const body = document.getElementById('editorBody');
-    body.scrollTop = body.scrollHeight;
-  }, 50);
-}
-
-function addNewRound() {
-  const rounds = editGames.map(g => g.round);
-  const newRound = rounds.length ? Math.max(...rounds) + 1 : 1;
-  addGame(newRound);
-}
-
-function saveGames() {
-  // Apply edits back to GAMES array
-  GAMES.length = 0;
-  editGames.forEach(g => GAMES.push(g));
-  // Refresh rounds & liveGames
-  const newRounds = [...new Set(GAMES.map(g => g.round))].sort((a,b) => a-b);
-  liveGames = GAMES.map(g => ({...g}));
-  activeRound = newRounds[0] || activeRound;
-  closeEditor();
-  showToast('✅ לוח המשחקים עודכן!');
-  render();
-}
 
 // ─── REGISTRATION ────────────────────────────────────────────────────────────
 const AVATARS = ['🏀','⚡','🔥','👑','🎯','🦅','💎','🌟','🏆','🐯','🦁','🐺','🚀','🎮','💪','😎'];
 let pickedAvatar = '';
 
 function initRegScreen() {
-  const picker = document.getElementById('avatarPicker');
-  picker.innerHTML = AVATARS.map(a =>
+  document.getElementById('avatarPicker').innerHTML = AVATARS.map(a =>
     `<button class="avatar-btn" onclick="pickAvatar('${a}',this)">${a}</button>`
   ).join('');
 }
-
 function pickAvatar(avatar, btn) {
   pickedAvatar = avatar;
   document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('picked'));
-  btn.classList.add('picked');
-  checkRegReady();
+  btn.classList.add('picked'); checkRegReady();
 }
-
 function onNicknameInput() {
   const val = document.getElementById('nicknameInput').value;
   document.getElementById('charCount').textContent = `${val.length}/16`;
   checkRegReady();
 }
-
 function checkRegReady() {
   const name = document.getElementById('nicknameInput').value.trim();
   const btn = document.getElementById('regBtn');
-  const ready = name.length >= 2 && pickedAvatar !== '';
-  btn.disabled = !ready;
-  btn.style.opacity = ready ? '1' : '0.35';
-  btn.style.cursor = ready ? 'pointer' : 'not-allowed';
+  const ok = name.length>=2 && pickedAvatar!=='';
+  btn.disabled = !ok; btn.style.opacity = ok?'1':'0.35';
 }
-
 function registerUser() {
   const name = document.getElementById('nicknameInput').value.trim();
-  if (!name || !pickedAvatar) return;
-
-  // Update "me" entry in leaderboard
-  const meIdx = LEADERBOARD.findIndex(u => u.isMe);
-  if (meIdx !== -1) {
-    LEADERBOARD[meIdx].name = name;
-    LEADERBOARD[meIdx].avatar = pickedAvatar;
-  }
-
-  // Hide overlay, show app
+  if (!name||!pickedAvatar) return;
+  const me = LEADERBOARD.find(u => u.isMe);
+  if (me) { me.name=name; me.avatar=pickedAvatar; }
   document.getElementById('regOverlay').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
-
   showToast(`ברוך הבא, ${name}! 🎉`);
   render();
 }
 
-// Show registration first, hide app until registered
 document.getElementById('app').style.display = 'none';
 initRegScreen();
 </script>
