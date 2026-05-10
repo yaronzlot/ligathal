@@ -232,7 +232,6 @@ const TEAMS = [
   { id:5,  short:'נס ציונה',      color:'#228B22', logo:'💎' },
   { id:6,  short:'נתניה',         color:'#8B4513', logo:'⚡' },
   { id:7,  short:'מכבי ר"ג',     color:'#4169E1', logo:'🔵' },
-  { id:8,  short:'הפועל חיפה',   color:'#20B2AA', logo:'⚓' },
   { id:9,  short:'הרצליה',        color:'#FF8C00', logo:'🏀' },
   { id:10, short:'גליל עליון',    color:'#2E8B57', logo:'🌿' },
   { id:11, short:'קריית אתא',     color:'#9400D3', logo:'🟣' },
@@ -755,6 +754,7 @@ function renderAdminContent() {
   let html = `
     <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
       <button style="${tabStyle('results')}" onclick="setAdminTab('results')">📋 תוצאות</button>
+      <button style="${tabStyle('api-import')}" onclick="setAdminTab('api-import')">🌐 יבוא מ-API</button>
       <button style="${tabStyle('new-round')}" onclick="setAdminTab('new-round')">➕ מחזור חדש</button>
       <button style="${tabStyle('unlock')}" onclick="setAdminTab('unlock')">🔓 פתיחה מחדש</button>
       <button style="${tabStyle('reset')}" onclick="setAdminTab('reset')">🗑️ איפוס</button>
@@ -762,6 +762,8 @@ function renderAdminContent() {
 
   if (adminTab === 'results') {
     html += renderAdminResults();
+  } else if (adminTab === 'api-import') {
+    html += renderAdminApiImport();
   } else if (adminTab === 'new-round') {
     html += renderAdminNewRound();
   } else if (adminTab === 'unlock') {
@@ -773,6 +775,208 @@ function renderAdminContent() {
   document.getElementById('adminContent').innerHTML = html;
 
   if (adminTab === 'new-round') initNewRoundForm();
+}
+
+// ── יבוא מ-API ──
+// מיפוי שמות קבוצות מ-TheSportsDB לקבוצות באפליקציה
+const TEAM_NAME_MAP = {
+  'maccabi tel aviv': 1, 'מכבי תל אביב': 1, 'maccabi t/a': 1,
+  'hapoel tel aviv': 2, 'הפועל תל אביב': 2,
+  'hapoel jerusalem': 3, 'הפועל ירושלים': 3, 'hapoel jerusalem bc': 3,
+  'holon': 4, 'ironi holon': 4, 'עירוני חולון': 4,
+  'nes ziona': 5, 'נס ציונה': 5, 'maccabi nes ziona': 5,
+  'netanya': 6, 'maccabi netanya': 6, 'נתניה': 6,
+  'maccabi rishon lezion': 7, 'מכבי ראשון לציון': 7,  'maccabi ramat gan': 7,
+
+  'herzliya': 9, 'עירוני הרצליה': 9, 'ironi herzliya': 9,
+  'galil elyon': 10, 'גליל עליון': 10,
+  'ironi kiryat ata': 11, 'קריית אתא': 11,
+  'maccabi be\'er sheva': 12, 'מכבי באר שבע': 12, 'beer sheva': 12,
+  'hapoel haemek': 13, 'הפועל העמק': 13,
+  'maccabi raanana': 14, 'מכבי רעננה': 14, 'raanana': 14,
+  'maccabi rishon': 15, 'מכבי ראשל"צ': 15,
+};
+
+function matchTeamName(name) {
+  if (!name) return null;
+  const lower = name.toLowerCase().trim();
+  for (const [key, id] of Object.entries(TEAM_NAME_MAP)) {
+    if (lower.includes(key) || key.includes(lower)) return id;
+  }
+  return null;
+}
+
+let apiImportPreview = []; // משחקים שנשלפו מה-API לתצוגה מקדימה
+let apiImportRoundNum = null;
+
+function renderAdminApiImport() {
+  const nextRound = GAMES.length ? Math.max(...GAMES.map(g => g.round)) + 1 : 1;
+  return `
+    <div style="font-size:13px;color:#ffffff66;line-height:1.6;margin-bottom:16px">
+      שליפת משחקי ליגת העל לשבוע הקרוב מ-TheSportsDB ובניית לוח משחקים אוטומטי.
+    </div>
+
+    <div style="background:#13132a;border-radius:14px;border:1px solid #ffffff12;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#ffffff66;margin-bottom:8px">מספר מחזור</div>
+      <input id="apiRoundNum" type="number" min="1" max="99" value="${nextRound}"
+        style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #ffffff20;background:#ffffff08;color:#fff;font-size:18px;font-weight:900;text-align:center;font-family:inherit;outline:none"
+        onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
+    </div>
+
+    <button onclick="fetchApiGames()"
+      style="width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;margin-bottom:14px;box-shadow:0 4px 20px #3b82f644">
+      🌐 שלוף משחקי השבוע הקרוב
+    </button>
+
+    <div id="apiImportResult"></div>
+  `;
+}
+
+async function fetchApiGames() {
+  const resultEl = document.getElementById('apiImportResult');
+  const roundInput = document.getElementById('apiRoundNum');
+  apiImportRoundNum = parseInt(roundInput?.value) || (GAMES.length ? Math.max(...GAMES.map(g=>g.round))+1 : 1);
+
+  resultEl.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px;color:#ffffff55;font-size:13px">
+      <div class="spinner"></div>
+      <span>שולף משחקים מ-TheSportsDB...</span>
+    </div>`;
+
+  try {
+    const leagueId = '4474';
+    const season = '2025-2026';
+    const url = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=${leagueId}&s=${season}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (!data.events || !data.events.length) {
+      resultEl.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">לא נמצאו משחקים בעונה זו</div>`;
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    const weekGames = data.events.filter(ev => {
+      const d = new Date(ev.dateEvent);
+      return d >= today && d <= nextWeek;
+    });
+
+    if (!weekGames.length) {
+      resultEl.innerHTML = `<div style="text-align:center;color:#f59e0b;padding:24px;line-height:1.8">⚠️ אין משחקים לשבוע הקרוב<br><span style="font-size:11px;color:#ffffff33">בדוק שהעונה והליגה נכונים</span></div>`;
+      return;
+    }
+
+    // התאמת קבוצות
+    apiImportPreview = weekGames.map(ev => {
+      const homeId = matchTeamName(ev.strHomeTeam);
+      const awayId = matchTeamName(ev.strAwayTeam);
+      return {
+        homeRaw: ev.strHomeTeam,
+        awayRaw: ev.strAwayTeam,
+        homeId,
+        awayId,
+        date: ev.dateEvent,
+        time: ev.strTime || '',
+        matched: !!(homeId && awayId),
+      };
+    });
+
+    renderApiPreview(resultEl);
+
+  } catch(err) {
+    console.error(err);
+    resultEl.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">שגיאה בשליפה: ${err.message}</div>`;
+  }
+}
+
+function renderApiPreview(container) {
+  const matched   = apiImportPreview.filter(g => g.matched);
+  const unmatched = apiImportPreview.filter(g => !g.matched);
+
+  let html = `
+    <div style="font-size:12px;font-weight:700;color:#ffd700aa;letter-spacing:1px;margin-bottom:10px">
+      נמצאו ${apiImportPreview.length} משחקים · ${matched.length} זוהו · ${unmatched.length} לא זוהו
+    </div>`;
+
+  apiImportPreview.forEach((g, i) => {
+    const home = g.homeId ? getTeam(g.homeId) : null;
+    const away = g.awayId ? getTeam(g.awayId) : null;
+    const ok   = g.matched;
+    const teamOptions = TEAMS.map(t => `<option value="${t.id}">${t.short}</option>`).join('');
+
+    html += `
+      <div style="background:#13132a;border-radius:14px;border:1px solid ${ok?'#22c55e33':'#f8717133'};padding:13px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;color:${ok?'#22c55e':'#f87171'};font-weight:700">${ok?'✅ זוהה':'⚠️ לא זוהה — בחר ידנית'}</span>
+          <span style="font-size:10px;color:#ffffff33">${g.date}${g.time?' '+g.time:''}</span>
+        </div>
+        <div style="font-size:11px;color:#ffffff44;margin-bottom:8px;text-align:center">${g.homeRaw} vs ${g.awayRaw}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="api-home-${i}" onchange="updateApiGame(${i},'homeId',this.value)"
+            style="flex:1;padding:7px 6px;border-radius:10px;border:1px solid ${ok?'#22c55e44':'#f8717144'};background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none">
+            <option value="">-- בית --</option>${teamOptions}
+          </select>
+          <span style="color:#ffffff33;font-size:12px;font-weight:900;flex-shrink:0">VS</span>
+          <select id="api-away-${i}" onchange="updateApiGame(${i},'awayId',this.value)"
+            style="flex:1;padding:7px 6px;border-radius:10px;border:1px solid ${ok?'#22c55e44':'#f8717144'};background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none">
+            <option value="">-- אורח --</option>${teamOptions}
+          </select>
+        </div>
+      </div>`;
+  });
+
+  const allOk = apiImportPreview.every(g => g.homeId && g.awayId);
+  html += `
+    <button onclick="saveApiImport()" ${allOk?'':'disabled'}
+      style="width:100%;padding:14px;border-radius:14px;border:none;background:${allOk?'linear-gradient(135deg,#ff4500,#ffd700)':'#333'};color:${allOk?'#000':'#ffffff33'};font-size:15px;font-weight:900;cursor:${allOk?'pointer':'not-allowed'};font-family:inherit;margin-top:4px">
+      🚀 צור מחזור ${apiImportRoundNum} (${apiImportPreview.length} משחקים)
+    </button>
+    ${!allOk?`<div style="text-align:center;font-size:11px;color:#f59e0b;margin-top:8px">השלם את הקבוצות הלא מזוהות כדי להמשיך</div>`:''}`;
+
+  container.innerHTML = html;
+
+  // Set selected values
+  apiImportPreview.forEach((g, i) => {
+    const hs = document.getElementById(`api-home-${i}`);
+    const as = document.getElementById(`api-away-${i}`);
+    if (hs && g.homeId) hs.value = g.homeId;
+    if (as && g.awayId) as.value = g.awayId;
+  });
+}
+
+function updateApiGame(idx, field, val) {
+  apiImportPreview[idx][field] = val ? parseInt(val) : null;
+  apiImportPreview[idx].matched = !!(apiImportPreview[idx].homeId && apiImportPreview[idx].awayId);
+  renderApiPreview(document.getElementById('apiImportResult'));
+}
+
+async function saveApiImport() {
+  if (!window._db) return;
+  const valid = apiImportPreview.filter(g => g.homeId && g.awayId);
+  if (!valid.length) { showToast('⚠️ אין משחקים תקינים לשמירה', '#f59e0b'); return; }
+
+  const maxId = GAMES.length ? Math.max(...GAMES.map(g => g.id)) : 0;
+  try {
+    const saves = valid.map((g, i) => {
+      const gameId = maxId + i + 1;
+      return window._fsSetDoc(window._fsDoc(window._db, 'games', String(gameId)), {
+        id: gameId, home: g.homeId, away: g.awayId,
+        round: apiImportRoundNum, status: 'upcoming',
+        hs: 0, as: 0, updatedAt: Date.now()
+      });
+    });
+    await Promise.all(saves);
+    showToast(`✅ מחזור ${apiImportRoundNum} נוצר עם ${valid.length} משחקים!`, '#22c55e');
+    adminTab = 'results';
+    renderAdminContent();
+  } catch(e) {
+    console.error(e);
+    showToast('שגיאה בשמירה', '#f87171');
+  }
 }
 
 // ── תוצאות ──
