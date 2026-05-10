@@ -599,6 +599,9 @@ async function registerUser() {
     // כינוי פנוי — נרשמים
     const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     currentUser = { id: userId, name, avatar: pickedAvatar };
+    localStorage.setItem('winnerId', userId);
+    localStorage.setItem('winnerName', name);
+    localStorage.setItem('winnerAvatar', pickedAvatar);
     await loadMyDataFromFirebase();
     await savePredictionsToFirebase();
     listenLeaderboard();
@@ -616,8 +619,30 @@ async function registerUser() {
   }
 }
 
+async function tryAutoLogin() {
+  const savedId     = localStorage.getItem('winnerId');
+  const savedName   = localStorage.getItem('winnerName');
+  const savedAvatar = localStorage.getItem('winnerAvatar');
+  if (!savedId || !savedName) return false;
+
+  // מחכים ש-Firebase יהיה מוכן
+  if (!window._firebaseReady) {
+    await new Promise(resolve => window.addEventListener('firebaseReady', resolve, { once: true }));
+  }
+
+  currentUser = { id: savedId, name: savedName, avatar: savedAvatar || '🏀' };
+  await loadMyDataFromFirebase();
+  listenLeaderboard();
+
+  document.getElementById('regOverlay').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  render();
+  return true;
+}
+
 document.getElementById('app').style.display = 'none';
 initRegScreen();
+tryAutoLogin();
 </script>
 </body>
 </html>
