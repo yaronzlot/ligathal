@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#080810">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
 <title>ניחוש מנצחת · ליגת ווינר סל</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -98,14 +97,17 @@
   .leader-info { flex: 1; }
   .leader-name { font-size: 14px; font-weight: 700; }
   .leader-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .leader-points { font-size: 22px; font-weight: 900; display: flex; flex-direction: column; align-items: flex-end; }
-  .leader-pts { font-size: 10px; font-weight: 600; color: var(--muted); }
+  .leader-pts-val { font-size: 22px; font-weight: 900; display: flex; flex-direction: column; align-items: flex-end; }
+  .leader-pts-lbl { font-size: 10px; font-weight: 600; color: var(--muted); }
   .invite-box { margin-top: 18px; background: linear-gradient(135deg, #1a1a3a, var(--card)); border-radius: 18px; border: 1px solid #3b82f633; padding: 18px 16px; text-align: center; }
   .invite-title { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
   .invite-sub { font-size: 13px; color: #ffffff66; margin-bottom: 14px; }
   .invite-btn { padding: 10px 24px; border-radius: 12px; border: 1px solid #3b82f666; background: #3b82f622; color: var(--blue); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
   .avatar-btn { width: 52px; height: 52px; border-radius: 16px; font-size: 26px; border: 2px solid #ffffff15; background: #ffffff08; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
   .avatar-btn.picked { border-color: var(--gold); background: #ffd70022; transform: scale(1.15); }
+  .loading-spinner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 12px; color: #ffffff44; font-size: 13px; }
+  .spinner { width: 32px; height: 32px; border: 3px solid #ffffff15; border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
   @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
@@ -153,6 +155,34 @@
   </nav>
 </div>
 
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBMQPbRgdYTIrcBZ4w5EbH64elKmpfHq84",
+  authDomain: "ligathal.firebaseapp.com",
+  projectId: "ligathal",
+  storageBucket: "ligathal.firebasestorage.app",
+  messagingSenderId: "909993829696",
+  appId: "1:909993829696:web:2d0c34e8d421d566e146a5"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+window._db = db;
+window._fsDoc = doc;
+window._fsSetDoc = setDoc;
+window._fsGetDoc = getDoc;
+window._fsCollection = collection;
+window._fsOnSnapshot = onSnapshot;
+window._fsQuery = query;
+window._fsOrderBy = orderBy;
+window._firebaseReady = true;
+window.dispatchEvent(new Event('firebaseReady'));
+</script>
+
 <script>
 // ─── TEAMS ───────────────────────────────────────────────────────────────────
 const TEAMS = [
@@ -173,43 +203,24 @@ const TEAMS = [
   { id:15, short:'מכבי ראשל"צ',  color:'#FF69B4', logo:'🌸' },
 ];
 
-// ─── מחזור 26 ────────────────────────────────────────────────────────────────
 const GAMES = [
-  { id:1, home:13, away:2,  round:26, status:'finished', hs:79, as:75 }, // העמק - הפועל ת"א → ניצחה העמק
-  { id:2, home:3,  away:15, round:26, status:'upcoming' },                // הפועל י-ם - ראשל"צ
-  { id:3, home:10, away:4,  round:26, status:'upcoming' },                // גליל עליון - חולון
-  { id:4, home:12, away:5,  round:26, status:'upcoming' },                // באר שבע - נס ציונה
-  { id:5, home:9,  away:6,  round:26, status:'upcoming' },                // הרצליה - נתניה
-  { id:6, home:1,  away:11, round:26, status:'upcoming' },                // מכבי ת"א - קריית אתא
-  { id:7, home:7,  away:14, round:26, status:'upcoming' },                // מכבי ר"ג - מכבי ר"ן
-];
-
-const LEADERBOARD = [
-  { name:'יוסי כהן',   points:187, correct:62, avatar:'👑' },
-  { name:'דנה לוי',    points:174, correct:58, avatar:'🔥' },
-  { name:'מיכאל רוזן', points:161, correct:53, avatar:'⚡' },
-  { name:'את/ה',       points:143, correct:47, avatar:'🏀', isMe:true },
-  { name:'אורן שמש',   points:138, correct:45, avatar:'🌟' },
-  { name:'רוני פרץ',   points:121, correct:40, avatar:'🎯' },
-];
-
-const HISTORY = [
-  { round:25, date:'02.05', predictions:6, correct:4, points:12, details:[
-    { home:1, away:3,  pick:'home', winner:'home', ok:true  },
-    { home:2, away:4,  pick:'away', winner:'home', ok:false },
-    { home:5, away:12, pick:'home', winner:'home', ok:true  },
-    { home:7, away:9,  pick:'home', winner:'home', ok:true  },
-    { home:10,away:6,  pick:'away', winner:'away', ok:true  },
-    { home:11,away:14, pick:'home', winner:'away', ok:false },
-  ]},
-  { round:24, date:'25.04', predictions:6, correct:3, points:9,  details:[] },
-  { round:23, date:'18.04', predictions:6, correct:5, points:15, details:[] },
-  { round:22, date:'11.04', predictions:6, correct:2, points:6,  details:[] },
+  { id:1,  home:13, away:2,  round:26, status:'finished', hs:79, as:75 },
+  { id:2,  home:3,  away:15, round:26, status:'upcoming' },
+  { id:3,  home:10, away:4,  round:26, status:'upcoming' },
+  { id:4,  home:12, away:5,  round:26, status:'upcoming' },
+  { id:5,  home:9,  away:6,  round:26, status:'upcoming' },
+  { id:6,  home:1,  away:11, round:26, status:'upcoming' },
+  { id:7,  home:7,  away:14, round:26, status:'upcoming' },
 ];
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
-let currentTab = 'predict', activeRound = 26, predictions = {}, submitted = {}, notifOn = false;
-let liveGames = GAMES.map(g => ({...g})), expandedRound = null;
+let currentTab = 'predict', activeRound = 26, notifOn = false;
+let predictions = {};   // { gameId: 'home'|'away' }
+let submitted = {};     // { round: true }
+let currentUser = null; // { id, name, avatar }
+let leaderboard = [];   // מ-Firestore
+let expandedRound = null;
+let liveGames = GAMES.map(g => ({...g}));
 
 const getTeam = id => TEAMS.find(t => t.id === id);
 const getRounds = () => [...new Set(GAMES.map(g => g.round))].sort((a,b) => a-b);
@@ -239,6 +250,55 @@ function render() {
   else if (currentTab === 'live')    c.innerHTML = renderLive();
   else if (currentTab === 'history') c.innerHTML = renderHistory();
   else if (currentTab === 'leaders') c.innerHTML = renderLeaders();
+}
+
+// ─── FIREBASE HELPERS ─────────────────────────────────────────────────────────
+async function savePredictionsToFirebase() {
+  if (!window._db || !currentUser) return;
+  const db = window._db;
+  const correct = countCorrect();
+  const points = correct * 3;
+  await window._fsSetDoc(window._fsDoc(db, 'users', currentUser.id), {
+    name: currentUser.name,
+    avatar: currentUser.avatar,
+    predictions,
+    submitted,
+    points,
+    correct,
+    updatedAt: Date.now()
+  });
+}
+
+async function loadMyDataFromFirebase() {
+  if (!window._db || !currentUser) return;
+  const db = window._db;
+  const snap = await window._fsGetDoc(window._fsDoc(db, 'users', currentUser.id));
+  if (snap.exists()) {
+    const data = snap.data();
+    predictions = data.predictions || {};
+    submitted = data.submitted || {};
+  }
+}
+
+function listenLeaderboard() {
+  if (!window._db) return;
+  const db = window._db;
+  const q = window._fsQuery(window._fsCollection(db, 'users'), window._fsOrderBy('points', 'desc'));
+  window._fsOnSnapshot(q, snap => {
+    leaderboard = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (currentTab === 'leaders') render();
+  });
+}
+
+function countCorrect() {
+  let c = 0;
+  GAMES.filter(g => g.status === 'finished').forEach(g => {
+    const pick = predictions[g.id];
+    if (!pick) return;
+    const winner = g.hs > g.as ? 'home' : 'away';
+    if (pick === winner) c++;
+  });
+  return c;
 }
 
 // ─── PREDICT ─────────────────────────────────────────────────────────────────
@@ -340,7 +400,7 @@ function renderFinishedCard(g) {
     </div>`;
 }
 
-function pickWinner(gameId, side) {
+async function pickWinner(gameId, side) {
   if (predictions[gameId] === side) delete predictions[gameId];
   else predictions[gameId] = side;
   const upcoming = GAMES.filter(x => x.round===activeRound && x.status==='upcoming');
@@ -349,14 +409,16 @@ function pickWinner(gameId, side) {
   if (pf) pf.style.width = `${filled/upcoming.length*100}%`;
   if (pl) pl.textContent = `${filled}/${upcoming.length} נבחרו`;
   render();
+  await savePredictionsToFirebase();
 }
 
-function submitPredictions() {
+async function submitPredictions() {
   const upcoming = GAMES.filter(g => g.round===activeRound && g.status==='upcoming');
   if (upcoming.filter(g => predictions[g.id]!==undefined).length < upcoming.length) {
     showToast('⚠️ בחר מנצחת לכל המשחקים', '#f59e0b'); return;
   }
   submitted[activeRound] = true;
+  await savePredictionsToFirebase();
   showToast('✅ הניחושים נשלחו! בהצלחה!');
   render();
 }
@@ -396,57 +458,64 @@ function renderLive() {
 
 // ─── HISTORY ─────────────────────────────────────────────────────────────────
 function renderHistory() {
-  const total = HISTORY.reduce((a,h) => a+h.points, 0);
-  const tc    = HISTORY.reduce((a,h) => a+h.correct, 0);
-  const tp    = HISTORY.reduce((a,h) => a+h.predictions, 0);
-  const pct   = Math.round(tc/tp*100);
+  const correct = countCorrect();
+  const total = correct * 3;
+  const finished = GAMES.filter(g => g.status === 'finished');
+  const pct = finished.length ? Math.round(correct / finished.length * 100) : 0;
+
   let html = `
     <div class="stats-row">
       <div class="stat-box" style="border-color:#ffd70044"><span style="font-size:22px">🏅</span><div class="stat-val" style="color:#ffd700">${total}</div><div class="stat-label">סה״כ נקודות</div></div>
       <div class="stat-box" style="border-color:#22c55e44"><span style="font-size:22px">🎯</span><div class="stat-val" style="color:#22c55e">${pct}%</div><div class="stat-label">אחוז הצלחה</div></div>
-      <div class="stat-box" style="border-color:#3b82f644"><span style="font-size:22px">✅</span><div class="stat-val" style="color:#3b82f6">${tc}/${tp}</div><div class="stat-label">ניחושים נכונים</div></div>
+      <div class="stat-box" style="border-color:#3b82f644"><span style="font-size:22px">✅</span><div class="stat-val" style="color:#3b82f6">${correct}/${finished.length}</div><div class="stat-label">ניחושים נכונים</div></div>
     </div>
-    <div class="section-label">מחזורים אחרונים</div>`;
-  HISTORY.forEach(h => {
-    const isExp = expandedRound === h.round;
-    const pc = h.points>=12?'#22c55e':h.points>=8?'#ffd700':'#f87171';
-    let det = '';
-    if (isExp && h.details.length) {
-      h.details.forEach(d => {
-        const hm = getTeam(d.home), aw = getTeam(d.away);
-        det += `<div class="hist-row" style="border-color:${d.ok?'#22c55e33':'#f8717133'}">
-          <span style="color:#ffffffcc">${hm.short} נגד ${aw.short}</span>
-          <span style="color:${d.ok?'#22c55e':'#f87171'}">${d.ok?`✅ ${d.pick==='home'?hm.short:aw.short}`:`❌ ${d.pick==='home'?hm.short:aw.short}`}</span>
-        </div>`;
-      });
-    }
+    <div class="section-label">ניחושים שלי — מחזור 26</div>`;
+
+  GAMES.filter(g => g.status === 'finished').forEach(g => {
+    const home = getTeam(g.home), away = getTeam(g.away);
+    const pick = predictions[g.id];
+    const winner = g.hs > g.as ? 'home' : 'away';
+    const ok = pick && pick === winner;
     html += `
-      <div class="hist-card">
-        <div class="hist-header" onclick="toggleHistory(${h.round})">
-          <div><div class="hist-round">מחזור ${h.round} · ${h.date}</div><div class="hist-sub">${h.correct}/${h.predictions} נכון</div></div>
-          <div class="hist-right"><span class="hist-points" style="color:${pc}">+${h.points} נק'</span><span style="color:#ffffff44;font-size:16px">${isExp?'▲':'▼'}</span></div>
-        </div>
-        ${isExp&&h.details.length?`<div class="hist-details">${det}</div>`:''}
+      <div class="hist-row" style="border:1px solid ${pick?(ok?'#22c55e33':'#f8717133'):'#ffffff10'};border-radius:12px;margin-bottom:8px;padding:10px 14px;background:#ffffff05">
+        <span style="color:#ffffffcc">${home.short} נגד ${away.short}</span>
+        <span style="color:${pick?(ok?'#22c55e':'#f87171'):'#ffffff33'}">
+          ${pick ? (ok ? `✅ ${pick==='home'?home.short:away.short}` : `❌ ${pick==='home'?home.short:away.short}`) : '—'}
+        </span>
       </div>`;
   });
+
+  if (!GAMES.some(g => g.status === 'finished')) {
+    html += '<div class="empty">אין תוצאות עדיין</div>';
+  }
+
   return html;
 }
-function toggleHistory(round) { expandedRound = expandedRound===round?null:round; render(); }
 
 // ─── LEADERS ─────────────────────────────────────────────────────────────────
 function renderLeaders() {
   const medals = ['🥇','🥈','🥉'];
-  let html = '<div class="section-label">🏆 לוח מובילים — חברים</div>';
-  LEADERBOARD.forEach((u,i) => {
-    const rank = i<3?medals[i]:`#${i+1}`;
-    const pc = i===0?'#ffd700':u.isMe?'#3b82f6':'#ffffffcc';
-    html += `<div class="leader-row ${u.isMe?'me':''}">
-      <div class="leader-rank">${rank}</div>
-      <div class="leader-avatar">${u.avatar}</div>
-      <div class="leader-info"><div class="leader-name">${u.name}${u.isMe?' (אני)':''}</div><div class="leader-sub">${u.correct} ניחושים נכונים</div></div>
-      <div class="leader-points" style="color:${pc}">${u.points}<span class="leader-pts">נק'</span></div>
-    </div>`;
-  });
+  let html = '<div class="section-label">🏆 לוח מובילים</div>';
+
+  if (leaderboard.length === 0) {
+    html += '<div class="loading-spinner"><div class="spinner"></div>טוען...</div>';
+  } else {
+    leaderboard.forEach((u, i) => {
+      const isMe = currentUser && u.id === currentUser.id;
+      const rank = i < 3 ? medals[i] : `#${i+1}`;
+      const pc = i===0?'#ffd700':isMe?'#3b82f6':'#ffffffcc';
+      html += `<div class="leader-row ${isMe?'me':''}">
+        <div class="leader-rank">${rank}</div>
+        <div class="leader-avatar">${u.avatar || '🏀'}</div>
+        <div class="leader-info">
+          <div class="leader-name">${u.name}${isMe?' (אני)':''}</div>
+          <div class="leader-sub">${u.correct || 0} ניחושים נכונים</div>
+        </div>
+        <div class="leader-pts-val" style="color:${pc}">${u.points || 0}<span class="leader-pts-lbl">נק'</span></div>
+      </div>`;
+    });
+  }
+
   html += `<div class="invite-box">
     <div class="invite-title">📨 הזמן חברים</div>
     <div class="invite-sub">שתף את הקישור ותתחרה עם חברים!</div>
@@ -454,6 +523,7 @@ function renderLeaders() {
   </div>`;
   return html;
 }
+
 function copyLink() {
   if (navigator.clipboard) navigator.clipboard.writeText(window.location.href);
   showToast('📋 הקישור הועתק!', '#3b82f6');
@@ -499,11 +569,24 @@ function checkRegReady() {
   const ok = name.length>=2 && pickedAvatar!=='';
   btn.disabled = !ok; btn.style.opacity = ok?'1':'0.35';
 }
-function registerUser() {
+
+async function registerUser() {
   const name = document.getElementById('nicknameInput').value.trim();
-  if (!name||!pickedAvatar) return;
-  const me = LEADERBOARD.find(u => u.isMe);
-  if (me) { me.name=name; me.avatar=pickedAvatar; }
+  if (!name || !pickedAvatar) return;
+
+  // יצירת ID ייחודי למשתמש
+  const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  currentUser = { id: userId, name, avatar: pickedAvatar };
+
+  // טעינת נתונים קיימים (אם המשתמש חוזר — כאן אפשר להוסיף login)
+  await loadMyDataFromFirebase();
+
+  // שמירה ראשונית
+  await savePredictionsToFirebase();
+
+  // האזנה ללוח מובילים
+  listenLeaderboard();
+
   document.getElementById('regOverlay').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   showToast(`ברוך הבא, ${name}! 🎉`);
