@@ -1025,12 +1025,12 @@ async function resetAll() {
     setTimeout(() => location.reload(), 1500);
   } catch(e) { showToast('שגיאה', '#f87171'); console.error(e); }
 }
+
+async function unlockRound(round) {
   if (!window._db) return;
   if (!confirm(`לפתוח את מחזור ${round} מחדש לניחוש?\nכל המשתמשים יוכלו לשנות את ניחושיהם.`)) return;
   try {
-    const snap = await new Promise(resolve => {
-      const unsub = window._fsOnSnapshot(window._fsCollection(window._db, 'users'), s => { unsub(); resolve(s); });
-    });
+    const snap = await window._fsGetDocs(window._fsCollection(window._db, 'users'));
     const updates = snap.docs.map(async docSnap => {
       const data = docSnap.data();
       const sub = { ...(data.submitted || {}) };
