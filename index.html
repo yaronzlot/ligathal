@@ -473,34 +473,118 @@ async function submitPredictions() {
 
 // ─── LIVE ────────────────────────────────────────────────────────────────────
 function renderLive() {
-  const live = liveGames.filter(g => g.status==='live');
-  if (!live.length) return '<div class="empty">🏀<br><br>אין משחקים חיים כרגע</div>';
-  let html = '<div class="section-label"><span style="animation:blink 1.5s infinite;display:inline-block">🔴</span> משחקים חיים עכשיו</div>';
-  live.forEach(g => {
-    const home = getTeam(g.home), away = getTeam(g.away);
-    html += `
-      <div class="card" style="border-color:#ff450055;box-shadow:0 0 24px #ff450020">
-        <div class="card-meta" style="justify-content:space-between">
-          <span class="live-chip">🔴 חי</span>
-          <span style="color:#ffd700aa;font-size:13px;font-weight:700">רבע ${g.q} · ${g.clk}</span>
-        </div>
-        <div class="teams-pick-row">
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
-            <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[home.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${home.logo}'"></div>
-            <span class="team-name">${home.short}</span>
+  const live     = liveGames.filter(g => g.status === 'live');
+  const upcoming = liveGames.filter(g => g.status === 'upcoming');
+  const finished = liveGames.filter(g => g.status === 'finished');
+
+  const refreshTime = lastLiveRefresh
+    ? lastLiveRefresh.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})
+    : '—';
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="section-label" style="margin-bottom:0"><span style="animation:blink 1.5s infinite;display:inline-block">🔴</span> תוצאות חיות</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="liveRefreshTime" style="font-size:10px;color:#ffffff33">עודכן ב-${refreshTime}</span>
+        <button onclick="fetchLiveScores()" style="background:#ffffff10;border:1px solid #ffffff20;border-radius:8px;color:#ffffff88;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit">↻ רענן</button>
+      </div>
+    </div>`;
+
+  if (!live.length && !upcoming.length && !finished.length) {
+    return html + '<div class="empty">🏀<br><br>אין משחקים להיום</div>';
+  }
+
+  if (live.length) {
+    live.forEach(g => {
+      const home = getTeam(g.home), away = getTeam(g.away);
+      html += `
+        <div class="card" style="border-color:#ff450055;box-shadow:0 0 24px #ff450020">
+          <div class="card-meta" style="justify-content:space-between">
+            <span class="live-chip">🔴 חי</span>
+            <span style="color:#ffd700aa;font-size:13px;font-weight:700">${g.q ? g.q : ''} ${g.clk ? '· '+g.clk : ''}</span>
           </div>
-          <div class="live-score-box">
-            <span class="live-num" id="live-hs-${g.id}">${g.hs}</span>
-            <span class="dash">—</span>
-            <span class="live-num" id="live-as-${g.id}">${g.as}</span>
+          <div class="teams-pick-row">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88">${home.logo}</div>
+              <span class="team-name">${home.short}</span>
+            </div>
+            <div class="live-score-box">
+              <span class="live-num" id="live-hs-${g.id}">${g.hs}</span>
+              <span class="dash">—</span>
+              <span class="live-num" id="live-as-${g.id}">${g.as}</span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88">${away.logo}</div>
+              <span class="team-name">${away.short}</span>
+            </div>
           </div>
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
-            <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[away.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${away.logo}'"></div>
-            <span class="team-name">${away.short}</span>
+        </div>`;
+    });
+  }
+
+  if (upcoming.filter(g => {
+    if (!g.date) return false;
+    const d = new Date(g.date);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayEnd = new Date(today); todayEnd.setHours(23,59,59,999);
+    return d >= today && d <= todayEnd;
+  }).length) {
+    html += '<div class="section-label" style="margin-top:16px">⏳ ממתינים להיום</div>';
+    upcoming.forEach(g => {
+      if (!g.date) return;
+      const d = new Date(g.date);
+      const today = new Date(); today.setHours(0,0,0,0);
+      const todayEnd = new Date(today); todayEnd.setHours(23,59,59,999);
+      if (d < today || d > todayEnd) return;
+      const home = getTeam(g.home), away = getTeam(g.away);
+      html += `
+        <div class="card">
+          <div class="teams-pick-row">
+            <div style="flex:1;text-align:center">
+              <div style="font-size:22px">${home.logo}</div>
+              <div class="team-name" style="margin-top:4px">${home.short}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <span style="font-size:13px;color:#ffffff33;font-weight:700">VS</span>
+              <span style="font-size:11px;color:#ffd700aa">${g.time || ''}</span>
+            </div>
+            <div style="flex:1;text-align:center">
+              <div style="font-size:22px">${away.logo}</div>
+              <div class="team-name" style="margin-top:4px">${away.short}</div>
+            </div>
           </div>
-        </div>
-      </div>`;
-  });
+        </div>`;
+    });
+  }
+
+  if (finished.length) {
+    html += '<div class="section-label" style="margin-top:16px">✅ סיימו היום</div>';
+    finished.forEach(g => {
+      const home = getTeam(g.home), away = getTeam(g.away);
+      const winnerHome = g.hs > g.as;
+      html += `
+        <div class="card" style="border-color:#22c55e33">
+          <div class="teams-pick-row">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:${winnerHome?1:0.5}">
+              <div style="font-size:22px">${home.logo}</div>
+              <div class="team-name">${home.short}</div>
+              ${winnerHome?'<div class="winner-badge">🏆 מנצחת</div>':''}
+            </div>
+            <div class="live-score-box">
+              <span class="live-num" style="color:${winnerHome?'#22c55e':'#ffffffcc'}">${g.hs}</span>
+              <span class="dash">—</span>
+              <span class="live-num" style="color:${!winnerHome?'#22c55e':'#ffffffcc'}">${g.as}</span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:${!winnerHome?1:0.5}">
+              <div style="font-size:22px">${away.logo}</div>
+              <div class="team-name">${away.short}</div>
+              ${!winnerHome?'<div class="winner-badge">🏆 מנצחת</div>':''}
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
   return html;
 }
 
@@ -966,7 +1050,10 @@ async function saveApiImport() {
       return window._fsSetDoc(window._fsDoc(window._db, 'games', String(gameId)), {
         id: gameId, home: g.homeId, away: g.awayId,
         round: apiImportRoundNum, status: 'upcoming',
-        hs: 0, as: 0, updatedAt: Date.now()
+        hs: 0, as: 0,
+        date: g.date || '',
+        time: g.time || '',
+        updatedAt: Date.now()
       });
     });
     await Promise.all(saves);
@@ -1338,20 +1425,130 @@ async function loadGamesFromFirebase() {
   listenGames();
 }
 
-// ─── LIVE UPDATES ────────────────────────────────────────────────────────────
-setInterval(() => {
-  liveGames = liveGames.map(g => {
-    if (g.status!=='live'||Math.random()>0.5) return g;
-    const side = Math.random()>0.5?'hs':'as';
-    const pts = Math.random()>0.7?3:Math.random()>0.5?2:1;
-    const updated = {...g, [side]: g[side]+pts};
-    if (currentTab==='live') {
-      const el = document.getElementById(`live-${side}-${g.id}`);
-      if (el) { el.textContent=updated[side]; el.classList.add('flash'); setTimeout(()=>el&&el.classList.remove('flash'),600); }
-    }
-    return updated;
-  });
-}, 3000);
+// ─── LIVE UPDATES מ-TheSportsDB (רענון כל 2 דקות) ───────────────────────────
+let liveRefreshInterval = null;
+let lastLiveRefresh = null;
+
+async function fetchLiveScores() {
+  try {
+    const leagueId = '4474';
+    const today = new Date().toISOString().split('T')[0];
+
+    // שליפת תוצאות היום
+    const url = `https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${today}&l=${leagueId}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    lastLiveRefresh = new Date();
+    updateLiveRefreshLabel();
+
+    // מציאת משחקים שיש להם תאריך ועדיין לא סיימו — כולל ימים קודמים
+    const pendingGames = GAMES.filter(g => g.status !== 'finished' && g.date);
+
+    // קיבוץ לפי תאריך — שליפה נפרדת לכל תאריך שאינו היום
+    const pastDates = [...new Set(
+      pendingGames
+        .filter(g => g.date < today)
+        .map(g => g.date)
+    )];
+
+    // שליפות נוספות לתאריכים שעברו
+    const extraFetches = pastDates.map(d =>
+      fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${d}&l=${leagueId}`)
+        .then(r => r.json())
+        .catch(() => ({ events: [] }))
+    );
+    const extraResults = await Promise.all(extraFetches);
+
+    // מיזוג כל האירועים
+    const allEvents = [
+      ...(data.events || []),
+      ...extraResults.flatMap(r => r.events || [])
+    ];
+
+    if (!allEvents.length) return;
+
+    let anyUpdate = false;
+
+    allEvents.forEach(ev => {
+      const homeId = matchTeamName(ev.strHomeTeam);
+      const awayId = matchTeamName(ev.strAwayTeam);
+      if (!homeId || !awayId) return;
+
+      const game = GAMES.find(g => g.home === homeId && g.away === awayId);
+      if (!game) return;
+
+      const hs = parseInt(ev.intHomeScore) || 0;
+      const as = parseInt(ev.intAwayScore) || 0;
+      const finished = ev.strStatus === 'Match Finished' || ev.strStatus === 'FT' || ev.strProgress === 'FT';
+      const isLive   = ev.strStatus === 'Match Running' ||
+                       (ev.strProgress && ev.strProgress !== '' && !finished);
+
+      const li = liveGames.findIndex(g => g.id === game.id);
+      if (li === -1) return;
+
+      const prev = liveGames[li];
+      const newStatus = finished ? 'finished' : isLive ? 'live' : game.status;
+      const quarter   = ev.strProgress || prev.q || '';
+
+      // אנימציית flash רק בלשונית חי
+      if (currentTab === 'live') {
+        if (hs !== prev.hs) {
+          const el = document.getElementById(`live-hs-${game.id}`);
+          if (el) { el.textContent = hs; el.classList.add('flash'); setTimeout(() => el && el.classList.remove('flash'), 600); }
+        }
+        if (as !== prev.as) {
+          const el = document.getElementById(`live-as-${game.id}`);
+          if (el) { el.textContent = as; el.classList.add('flash'); setTimeout(() => el && el.classList.remove('flash'), 600); }
+        }
+      }
+
+      liveGames[li] = { ...prev, hs, as, status: newStatus, q: quarter, clk: ev.strProgress || '' };
+      anyUpdate = true;
+
+      // אם הסתיים ועדיין לא עודכן — שמור ב-Firebase ועדכן ניקוד
+      if (finished && game.status !== 'finished') {
+        window._fsSetDoc(window._fsDoc(window._db, 'games', String(game.id)), {
+          ...game, hs, as, status: 'finished', updatedAt: Date.now()
+        }).then(() => {
+          showToast(`✅ ${getTeam(homeId).short} ${hs}–${as} ${getTeam(awayId).short} — תוצאה נקלטה אוטומטית!`, '#22c55e');
+          recalcAllUsersPoints();
+        }).catch(console.error);
+      }
+    });
+
+    if (anyUpdate && currentTab === 'live') render();
+
+  } catch(err) {
+    console.error('Live fetch error:', err);
+  }
+}
+
+function updateLiveRefreshLabel() {
+  const el = document.getElementById('liveRefreshTime');
+  if (el && lastLiveRefresh) {
+    el.textContent = `עודכן ב-${lastLiveRefresh.toLocaleTimeString('he-IL', {hour:'2-digit',minute:'2-digit'})}`;
+  }
+}
+
+function startLivePolling() {
+  if (liveRefreshInterval) return;
+  fetchLiveScores(); // מיד בפתיחה
+  liveRefreshInterval = setInterval(fetchLiveScores, 2 * 60 * 1000); // כל 2 דקות
+}
+
+function stopLivePolling() {
+  if (liveRefreshInterval) { clearInterval(liveRefreshInterval); liveRefreshInterval = null; }
+}
+
+// הפעל polling רק כשנמצאים בלשונית "חי"
+const _origSetTab = setTab;
+window.setTab = function(tab) {
+  _origSetTab(tab);
+  if (tab === 'live') startLivePolling();
+  else stopLivePolling();
+};
+
 
 // ─── REGISTRATION ────────────────────────────────────────────────────────────
 const AVATARS = ['🏀','⚡','🔥','👑','🎯','🦅','💎','🌟','🏆','🐯','🦁','🐺','🚀','🎮','💪','😎'];
@@ -1459,6 +1656,9 @@ async function initApp() {
   }
   await loadGamesFromFirebase();
   await tryAutoLogin();
+  // פולינג ברקע כל 2 דקות גם מחוץ ללשונית "חי"
+  fetchLiveScores();
+  setInterval(fetchLiveScores, 2 * 60 * 1000);
 }
 initApp();
 </script>
