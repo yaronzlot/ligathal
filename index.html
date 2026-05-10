@@ -155,6 +155,14 @@
   </nav>
 </div>
 
+<!-- מודאל ניחושי משתמש -->
+<div id="userModal" style="display:none;position:fixed;inset:0;z-index:200;background:#000000bb;align-items:flex-end;justify-content:center" onclick="closeUserModal(event)">
+  <div id="userModalBox" style="background:#13132a;border-radius:24px 24px 0 0;border:1px solid #ffffff15;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:20px 18px 36px;position:relative">
+    <div style="width:40px;height:4px;background:#ffffff22;border-radius:4px;margin:0 auto 18px"></div>
+    <div id="userModalContent"></div>
+  </div>
+</div>
+
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -504,7 +512,7 @@ function renderLeaders() {
       const isMe = currentUser && u.id === currentUser.id;
       const rank = i < 3 ? medals[i] : `#${i+1}`;
       const pc = i===0?'#ffd700':isMe?'#3b82f6':'#ffffffcc';
-      html += `<div class="leader-row ${isMe?'me':''}">
+      html += `<div class="leader-row ${isMe?'me':''}" onclick="openUserModal('${u.id}')" style="cursor:pointer">
         <div class="leader-rank">${rank}</div>
         <div class="leader-avatar">${u.avatar || '🏀'}</div>
         <div class="leader-info">
@@ -522,6 +530,71 @@ function renderLeaders() {
     <button class="invite-btn" onclick="copyLink()">📋 העתק קישור</button>
   </div>`;
   return html;
+}
+
+function openUserModal(userId) {
+  const u = leaderboard.find(x => x.id === userId);
+  if (!u) return;
+  const preds = u.predictions || {};
+  const isMe = currentUser && u.id === currentUser.id;
+  const medals = ['🥇','🥈','🥉'];
+  const rank = leaderboard.indexOf(u);
+  const rankLabel = rank < 3 ? medals[rank] : `#${rank+1}`;
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div style="font-size:42px">${u.avatar || '🏀'}</div>
+      <div>
+        <div style="font-size:18px;font-weight:800">${u.name}${isMe?' (אני)':''}</div>
+        <div style="font-size:13px;color:#ffffff66;margin-top:3px">${rankLabel} · ${u.points || 0} נקודות · ${u.correct || 0} נכונים</div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-bottom:12px">🎯 ניחושים — מחזור 26</div>`;
+
+  const upcomingGames = GAMES.filter(g => g.round === 26 && g.status === 'upcoming');
+  const finishedGames = GAMES.filter(g => g.round === 26 && g.status === 'finished');
+  const allGames = [...finishedGames, ...upcomingGames];
+
+  if (allGames.length === 0) {
+    html += '<div style="text-align:center;color:#ffffff33;padding:20px">אין משחקים</div>';
+  } else {
+    allGames.forEach(g => {
+      const home = getTeam(g.home), away = getTeam(g.away);
+      const pick = preds[g.id];
+      const isFinished = g.status === 'finished';
+      const winner = isFinished ? (g.hs > g.as ? 'home' : 'away') : null;
+      const ok = pick && isFinished && pick === winner;
+      const wrong = pick && isFinished && pick !== winner;
+
+      let pickColor = '#ffffff33';
+      let pickIcon = '—';
+      if (pick === 'home') pickIcon = home.short;
+      else if (pick === 'away') pickIcon = away.short;
+
+      if (ok) pickColor = '#22c55e';
+      else if (wrong) pickColor = '#f87171';
+      else if (pick) pickColor = '#ffd700aa';
+
+      const resultStr = isFinished ? `${g.hs}–${g.as}` : '';
+
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;border:1px solid ${ok?'#22c55e33':wrong?'#f8717133':'#ffffff10'};background:#ffffff05;margin-bottom:8px">
+        <span style="color:#ffffffcc;font-size:13px">${home.short} נגד ${away.short}${resultStr?' · '+resultStr:''}</span>
+        <span style="color:${pickColor};font-size:13px;font-weight:700">
+          ${pick ? (ok?'✅ ':wrong?'❌ ':'🎯 ')+pickIcon : '—'}
+        </span>
+      </div>`;
+    });
+  }
+
+  document.getElementById('userModalContent').innerHTML = html;
+  const modal = document.getElementById('userModal');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => { modal.style.opacity = '1'; });
+}
+
+function closeUserModal(e) {
+  if (e && e.target !== document.getElementById('userModal')) return;
+  document.getElementById('userModal').style.display = 'none';
 }
 
 function copyLink() {
