@@ -574,23 +574,46 @@ async function registerUser() {
   const name = document.getElementById('nicknameInput').value.trim();
   if (!name || !pickedAvatar) return;
 
-  // יצירת ID ייחודי למשתמש
-  const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-  currentUser = { id: userId, name, avatar: pickedAvatar };
+  const btn = document.getElementById('regBtn');
+  const input = document.getElementById('nicknameInput');
+  btn.textContent = '⏳ בודק...';
+  btn.disabled = true;
 
-  // טעינת נתונים קיימים (אם המשתמש חוזר — כאן אפשר להוסיף login)
-  await loadMyDataFromFirebase();
+  try {
+    // בדיקה אם הכינוי כבר תפוס
+    if (window._db) {
+      const snap = await new Promise(resolve => {
+        const unsub = window._fsOnSnapshot(window._fsCollection(window._db, 'users'), s => { unsub(); resolve(s); });
+      });
+      const taken = snap.docs.some(d => (d.data().name || '').trim().toLowerCase() === name.toLowerCase());
+      if (taken) {
+        showToast('⚠️ הכינוי הזה כבר תפוס, בחר אחר', '#f59e0b');
+        input.style.borderColor = '#f87171';
+        setTimeout(() => input.style.borderColor = '#ffffff20', 2500);
+        btn.textContent = 'בואו נשחק! 🎯';
+        btn.disabled = false;
+        return;
+      }
+    }
 
-  // שמירה ראשונית
-  await savePredictionsToFirebase();
+    // כינוי פנוי — נרשמים
+    const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    currentUser = { id: userId, name, avatar: pickedAvatar };
+    await loadMyDataFromFirebase();
+    await savePredictionsToFirebase();
+    listenLeaderboard();
 
-  // האזנה ללוח מובילים
-  listenLeaderboard();
+    document.getElementById('regOverlay').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    showToast(`ברוך הבא, ${name}! 🎉`);
+    render();
 
-  document.getElementById('regOverlay').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  showToast(`ברוך הבא, ${name}! 🎉`);
-  render();
+  } catch (err) {
+    console.error(err);
+    showToast('שגיאת חיבור, נסה שוב', '#f87171');
+    btn.textContent = 'בואו נשחק! 🎯';
+    btn.disabled = false;
+  }
 }
 
 document.getElementById('app').style.display = 'none';
