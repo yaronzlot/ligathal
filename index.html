@@ -195,7 +195,7 @@
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, orderBy, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMQPbRgdYTIrcBZ4w5EbH64elKmpfHq84",
@@ -216,6 +216,8 @@ window._fsCollection = collection;
 window._fsOnSnapshot = onSnapshot;
 window._fsQuery = query;
 window._fsOrderBy = orderBy;
+window._fsDeleteDoc = deleteDoc;
+window._fsGetDocs = getDocs;
 window._firebaseReady = true;
 window.dispatchEvent(new Event('firebaseReady'));
 </script>
@@ -751,10 +753,11 @@ function renderAdminContent() {
     : 'flex:1;padding:9px 0;border-radius:10px;border:1px solid #ffffff15;background:transparent;color:#ffffff55;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
 
   let html = `
-    <div style="display:flex;gap:8px;margin-bottom:18px">
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
       <button style="${tabStyle('results')}" onclick="setAdminTab('results')">📋 תוצאות</button>
       <button style="${tabStyle('new-round')}" onclick="setAdminTab('new-round')">➕ מחזור חדש</button>
       <button style="${tabStyle('unlock')}" onclick="setAdminTab('unlock')">🔓 פתיחה מחדש</button>
+      <button style="${tabStyle('reset')}" onclick="setAdminTab('reset')">🗑️ איפוס</button>
     </div>`;
 
   if (adminTab === 'results') {
@@ -763,6 +766,8 @@ function renderAdminContent() {
     html += renderAdminNewRound();
   } else if (adminTab === 'unlock') {
     html += renderAdminUnlock();
+  } else if (adminTab === 'reset') {
+    html += renderAdminReset();
   }
 
   document.getElementById('adminContent').innerHTML = html;
@@ -938,7 +943,88 @@ function renderAdminUnlock() {
   return html;
 }
 
-async function unlockRound(round) {
+// ── איפוס ──
+function renderAdminReset() {
+  return `
+    <div style="background:#1a0a0a;border-radius:14px;border:1px solid #f8717133;padding:18px;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:800;color:#f87171;margin-bottom:6px">⚠️ אזור מסוכן</div>
+      <div style="font-size:13px;color:#ffffff66;line-height:1.6;margin-bottom:16px">האיפוס מוחק לצמיתות. לא ניתן לשחזר.</div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="resetGames()"
+          style="width:100%;padding:12px;border-radius:12px;border:1px solid #f8717155;background:#f8717115;color:#f87171;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
+          🗑️ מחק את כל המשחקים והמחזורים
+        </button>
+        <button onclick="resetPredictions()"
+          style="width:100%;padding:12px;border-radius:12px;border:1px solid #f59e0b55;background:#f59e0b15;color:#f59e0b;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
+          🗑️ מחק ניחושים וניקוד של כל המשתמשים
+        </button>
+        <button onclick="resetUsers()"
+          style="width:100%;padding:12px;border-radius:12px;border:1px solid #9400d355;background:#9400d315;color:#c084fc;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
+          🗑️ מחק את כל המשתמשים
+        </button>
+        <button onclick="resetAll()"
+          style="width:100%;padding:14px;border-radius:12px;border:none;background:#f87171;color:#000;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:4px">
+          💣 איפוס מלא — הכל
+        </button>
+      </div>
+    </div>`;
+}
+
+async function deleteCollection(colName) {
+  const snap = await window._fsGetDocs(window._fsCollection(window._db, colName));
+  await Promise.all(snap.docs.map(d => window._fsDeleteDoc(window._fsDoc(window._db, colName, d.id))));
+  return snap.size;
+}
+
+async function resetGames() {
+  if (!confirm('למחוק את כל המשחקים והמחזורים?\nהמשתמשים יישארו עם הניחושים הישנים.')) return;
+  try {
+    const n = await deleteCollection('games');
+    showToast(`🗑️ ${n} משחקים נמחקו`, '#f87171');
+    renderAdminContent();
+  } catch(e) { showToast('שגיאה', '#f87171'); console.error(e); }
+}
+
+async function resetPredictions() {
+  if (!confirm('למחק את כל הניחושים והניקוד?\nהמשתמשים יישארו רשומים.')) return;
+  try {
+    const snap = await window._fsGetDocs(window._fsCollection(window._db, 'users'));
+    await Promise.all(snap.docs.map(d =>
+      window._fsSetDoc(window._fsDoc(window._db, 'users', d.id), {
+        ...d.data(), predictions: {}, submitted: {}, points: 0, correct: 0
+      })
+    ));
+    predictions = {}; submitted = {};
+    showToast('🗑️ ניחושים וניקוד אופסו', '#f59e0b');
+  } catch(e) { showToast('שגיאה', '#f87171'); console.error(e); }
+}
+
+async function resetUsers() {
+  if (!confirm('למחוק את כל המשתמשים?\nהם יצטרכו להירשם מחדש.')) return;
+  try {
+    const n = await deleteCollection('users');
+    showToast(`🗑️ ${n} משתמשים נמחקו`, '#c084fc');
+  } catch(e) { showToast('שגיאה', '#f87171'); console.error(e); }
+}
+
+async function resetAll() {
+  if (!confirm('איפוס מלא — למחוק את הכל?\nמשחקים, ניחושים ומשתמשים.')) return;
+  if (!confirm('אישור אחרון — בטוח לגמרי?')) return;
+  try {
+    await Promise.all([
+      deleteCollection('games'),
+      deleteCollection('users'),
+    ]);
+    predictions = {}; submitted = {}; leaderboard = [];
+    localStorage.removeItem('winnerId');
+    localStorage.removeItem('winnerName');
+    localStorage.removeItem('winnerAvatar');
+    showToast('💣 איפוס מלא בוצע!', '#f87171');
+    document.getElementById('adminModal').style.display = 'none';
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) { showToast('שגיאה', '#f87171'); console.error(e); }
+}
   if (!window._db) return;
   if (!confirm(`לפתוח את מחזור ${round} מחדש לניחוש?\nכל המשתמשים יוכלו לשנות את ניחושיהם.`)) return;
   try {
