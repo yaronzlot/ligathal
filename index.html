@@ -1592,18 +1592,30 @@ async function registerUser() {
   btn.disabled = true;
 
   try {
-    // בדיקה אם הכינוי כבר תפוס
+    // בדיקה אם הכינוי כבר קיים
     if (window._db) {
       const snap = await new Promise(resolve => {
         const unsub = window._fsOnSnapshot(window._fsCollection(window._db, 'users'), s => { unsub(); resolve(s); });
       });
-      const taken = snap.docs.some(d => (d.data().name || '').trim().toLowerCase() === name.toLowerCase());
-      if (taken) {
-        showToast('⚠️ הכינוי הזה כבר תפוס, בחר אחר', '#f59e0b');
-        input.style.borderColor = '#f87171';
-        setTimeout(() => input.style.borderColor = '#ffffff20', 2500);
-        btn.textContent = 'בואו נשחק! 🎯';
-        btn.disabled = false;
+      const existingDoc = snap.docs.find(d => (d.data().name || '').trim().toLowerCase() === name.toLowerCase());
+      if (existingDoc) {
+        // כינוי קיים — מתחברים כמשתמש הקיים
+        const existingData = existingDoc.data();
+        const newAvatar = pickedAvatar || existingData.avatar || '🏀';
+        currentUser = { id: existingDoc.id, name: existingData.name, avatar: newAvatar };
+        localStorage.setItem('winnerId', existingDoc.id);
+        localStorage.setItem('winnerName', existingData.name);
+        localStorage.setItem('winnerAvatar', newAvatar);
+        await loadMyDataFromFirebase();
+        // עדכון אמוג'י ב-Firebase אם השתנה
+        if (newAvatar !== existingData.avatar) {
+          await window._fsSetDoc(window._fsDoc(window._db, 'users', existingDoc.id), { avatar: newAvatar }, { merge: true });
+        }
+        listenLeaderboard();
+        document.getElementById('regOverlay').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        showToast(`ברוך הבא בחזרה, ${existingData.name}! 🎉`);
+        render();
         return;
       }
     }
