@@ -114,6 +114,18 @@
   .loading-spinner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 12px; color: #ffffff44; font-size: 13px; }
   .spinner { width: 32px; height: 32px; border: 3px solid #ffffff15; border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .league-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 4px; }
+  .league-table thead tr { border-bottom: 1px solid #ffffff15; }
+  .league-table th { padding: 8px 6px; color: var(--muted); font-weight: 700; font-size: 11px; text-align: center; }
+  .league-table th:nth-child(2) { text-align: right; }
+  .league-table td { padding: 9px 6px; text-align: center; border-bottom: 1px solid #ffffff08; }
+  .league-table td:nth-child(2) { text-align: right; }
+  .league-table tr.top-team td { color: var(--gold); }
+  .league-table .position { font-weight: 800; color: #ffffff66; width: 24px; }
+  .league-table .team-name { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .league-table .team-logo { width: 22px; height: 22px; object-fit: contain; border-radius: 4px; }
+  .league-table-card { background: linear-gradient(135deg, var(--card), var(--card2)); border-radius: 18px; border: 1px solid var(--border); padding: 14px 16px; margin-bottom: 16px; }
+  .league-table-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
   @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
   @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
@@ -155,7 +167,7 @@
   <div class="content" id="content"></div>
   <nav class="nav">
     <button class="nav-btn active" id="tab-predict" onclick="setTab('predict')"><span class="nav-icon">🎯</span>ניחושים</button>
-    <button class="nav-btn" id="tab-live" onclick="setTab('live')"><span class="nav-icon">🔴</span>חי<span class="live-dot"></span></button>
+    <button class="nav-btn" id="tab-live" onclick="setTab('live')"><span class="nav-icon">🔴</span>תוצאות<span class="live-dot"></span></button>
     <button class="nav-btn" id="tab-history" onclick="setTab('history')"><span class="nav-icon">📊</span>היסטוריה</button>
     <button class="nav-btn" id="tab-leaders" onclick="setTab('leaders')"><span class="nav-icon">🏆</span>טבלה</button>
   </nav>
@@ -657,7 +669,15 @@ function renderHistory() {
 // ─── LEADERS ─────────────────────────────────────────────────────────────────
 function renderLeaders() {
   const medals = ['🥇','🥈','🥉'];
-  let html = '<div class="section-label">🏆 לוח מובילים</div>';
+  let html = `
+    <div class="league-table-card">
+      <div class="league-table-title">📋 טבלת ליגת העל בכדורסל</div>
+      <div id="leagueTableContent"><div class="loading-spinner"><div class="spinner"></div>טוען טבלה...</div></div>
+    </div>
+  `;
+  html += '<div class="section-label">🏆 לוח מובילים</div>';
+  // trigger fetch after DOM update
+  setTimeout(() => fetchLeagueStandings(), 0);
 
   if (leaderboard.length === 0) {
     html += '<div class="loading-spinner"><div class="spinner"></div>טוען...</div>';
@@ -1665,6 +1685,69 @@ async function initApp() {
   setInterval(fetchLiveScores, 2 * 60 * 1000);
 }
 initApp();
+
+// ─── LEAGUE STANDINGS ────────────────────────────────────────────────────────
+async function fetchLeagueStandings() {
+  const contentDiv = document.getElementById('leagueTableContent');
+  if (!contentDiv) return;
+
+  const leagueId = '4474';
+  const season = '2025-2026';
+  const apiUrl = `https://www.thesportsdb.com/api/v1/json/1/lookuptable.php?id=${leagueId}&s=${season}`;
+
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+
+    if (!data.table || data.table.length === 0) {
+      const prevSeason = '2024-2025';
+      const prevUrl = `https://www.thesportsdb.com/api/v1/json/1/lookuptable.php?id=${leagueId}&s=${prevSeason}`;
+      const prevRes = await fetch(prevUrl);
+      const prevData = await prevRes.json();
+      if (!prevData.table || prevData.table.length === 0) {
+        contentDiv.innerHTML = '<div style="text-align:center;color:#f87171;padding:16px;font-size:13px">❌ טבלה לא זמינה כרגע</div>';
+        return;
+      }
+      renderStandings(prevData.table, prevSeason);
+      return;
+    }
+    renderStandings(data.table, season);
+  } catch (err) {
+    const contentDiv2 = document.getElementById('leagueTableContent');
+    if (contentDiv2) contentDiv2.innerHTML = `<div style="text-align:center;color:#f87171;padding:16px;font-size:13px">❌ שגיאה בטעינת הטבלה</div>`;
+  }
+}
+
+function renderStandings(table, season) {
+  const contentDiv = document.getElementById('leagueTableContent');
+  if (!contentDiv) return;
+
+  const sorted = [...table].sort((a, b) => (parseInt(b.intPoints) || parseInt(b.len) || 0) - (parseInt(a.intPoints) || parseInt(a.len) || 0));
+
+  let html = '<table class="league-table"><thead><tr><th>#</th><th>קבוצה</th><th>נ\'</th><th>ה\'</th><th>נק\'</th></tr></thead><tbody>';
+
+  sorted.forEach((team, i) => {
+    const pos = i + 1;
+    const wins = parseInt(team.intWin) || parseInt(team.won) || 0;
+    const losses = parseInt(team.intLoss) || (parseInt(team.intPlayed || team.played) - wins) || 0;
+    const points = parseInt(team.intPoints) || parseInt(team.len) || 0;
+    const name = team.strTeam || team.team || team.name || 'קבוצה';
+    const logo = team.strTeamBadge || team.badge || '';
+    const topClass = pos === 1 ? 'top-team' : '';
+
+    html += `<tr class="${topClass}">
+      <td class="position">${pos}</td>
+      <td><div class="team-name">${logo ? `<img src="${logo}" class="team-logo" alt="">` : ''}${name}</div></td>
+      <td>${wins}</td>
+      <td>${losses}</td>
+      <td><strong>${points}</strong></td>
+    </tr>`;
+  });
+
+  html += `</tbody></table><div style="text-align:center;margin-top:8px;font-size:11px;color:#ffffff33">עונה: ${season}</div>`;
+  contentDiv.innerHTML = html;
+}
 
 // ─── PWA Service Worker ───────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
