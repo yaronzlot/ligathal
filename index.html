@@ -485,7 +485,7 @@ function renderLive() {
       <div class="section-label" style="margin-bottom:0"><span style="animation:blink 1.5s infinite;display:inline-block">🔴</span> תוצאות חיות</div>
       <div style="display:flex;align-items:center;gap:8px">
         <span id="liveRefreshTime" style="font-size:10px;color:#ffffff33">עודכן ב-${refreshTime}</span>
-        <button onclick="fetchLiveScores()" style="background:#ffffff10;border:1px solid #ffffff20;border-radius:8px;color:#ffffff88;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit">↻ רענן</button>
+        <button onclick="manualRefresh(this)" style="background:#ffffff10;border:1px solid #ffffff20;border-radius:8px;color:#ffffff88;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit">↻ רענן</button>
       </div>
     </div>`;
 
@@ -1520,13 +1520,22 @@ async function fetchLiveScores() {
       }
     });
 
-    if (anyUpdate && currentTab === 'live') render();
+    if (currentTab === 'live') render();
 
   } catch(err) {
     console.error('Live fetch error:', err);
+    if (currentTab === 'live') render(); // render even on error so Firebase data shows
   }
 }
 
+async function manualRefresh(btn) {
+  btn.textContent = "⏳ טוען...";
+  btn.disabled = true;
+  await fetchLiveScores();
+  btn.textContent = "↻ רענן";
+  btn.disabled = false;
+  showToast("🔄 עודכן!", "#3b82f6");
+}
 function updateLiveRefreshLabel() {
   const el = document.getElementById('liveRefreshTime');
   if (el && lastLiveRefresh) {
