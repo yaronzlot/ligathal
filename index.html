@@ -874,7 +874,8 @@ const TEAM_NAME_MAP = {
   'holon': 4, 'ironi holon': 4, 'עירוני חולון': 4,
   'nes ziona': 5, 'נס ציונה': 5, 'maccabi nes ziona': 5,
   'netanya': 6, 'maccabi netanya': 6, 'נתניה': 6,
-  'maccabi rishon lezion': 7, 'מכבי ראשון לציון': 7,  'maccabi ramat gan': 7,
+  'maccabi ramat gan': 7,
+  'maccabi rishon lezion': 15, 'מכבי ראשון לציון': 15, 'maccabi rishon le-zion': 15, 'rishon lezion': 15, 'rishon le-zion': 15,
 
   'herzliya': 9, 'עירוני הרצליה': 9, 'ironi herzliya': 9,
   'galil elyon': 10, 'גליל עליון': 10,
@@ -1484,7 +1485,10 @@ async function fetchLiveScores() {
 
       const hs = parseInt(ev.intHomeScore) || 0;
       const as = parseInt(ev.intAwayScore) || 0;
-      const finished = ev.strStatus === 'Match Finished' || ev.strStatus === 'FT' || ev.strProgress === 'FT';
+      const finishedStatuses = ['match finished', 'ft', 'ap', 'aet', 'finished', 'ended', 'final'];
+      const finished = finishedStatuses.includes((ev.strStatus || '').toLowerCase()) ||
+                       finishedStatuses.includes((ev.strProgress || '').toLowerCase()) ||
+                       (ev.intHomeScore !== null && ev.intHomeScore !== '' && ev.strStatus === '');
       const isLive   = ev.strStatus === 'Match Running' ||
                        (ev.strProgress && ev.strProgress !== '' && !finished);
 
