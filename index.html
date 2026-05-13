@@ -1716,40 +1716,43 @@ window.addEventListener('popstate', () => {
   history.pushState({ page: 'app' }, '');
 });
 
+function doExit() {
+  window.close();
+  setTimeout(() => {
+    if (!document.hidden) {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#080810;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:inherit;text-align:center;padding:32px;';
+      msg.innerHTML = `
+        <div style="font-size:48px">🏀</div>
+        <div style="font-size:18px;font-weight:800;color:#fff">כדי לצאת מהאפליקציה</div>
+        <div style="font-size:14px;color:#ffffff88;line-height:1.8">לחץ על כפתור הבית<br>או סגור את הלשונית ידנית</div>
+        <button onclick="this.parentElement.remove()" style="margin-top:8px;padding:12px 28px;border-radius:14px;border:1px solid #ffffff20;background:#ffffff10;color:#ffffffcc;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">חזרה לאפליקציה</button>`;
+      document.body.appendChild(msg);
+    }
+  }, 400);
+}
+
 function showExitDialog() {
-  if (document.getElementById('exitDialog')) return;
+  if (document.getElementById('exitDialog')) {
+    doExit();
+    return;
+  }
   const overlay = document.createElement('div');
   overlay.id = 'exitDialog';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000000bb;display:flex;align-items:flex-end;justify-content:center;';
   overlay.innerHTML = `
     <div style="background:#13132a;border-radius:24px 24px 0 0;border:1px solid #ffffff15;width:100%;max-width:480px;padding:28px 24px 44px;text-align:center;animation:slideUpBox 0.25s ease">
       <div style="font-size:40px;margin-bottom:12px">🏀</div>
-      <div style="font-size:18px;font-weight:800;margin-bottom:8px">לצאת מהאפליקציה?</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px">לחץ שוב פעם ליציאה</div>
       <div style="font-size:13px;color:#ffffff55;margin-bottom:28px">הניחושים שלך שמורים בענן 👍</div>
-      <div style="display:flex;gap:12px">
+      <div style="display:flex;gap:12px;justify-content:center">
         <button id="exitCancel" style="flex:1;padding:14px;border-radius:16px;border:1px solid #ffffff20;background:#ffffff08;color:#ffffffcc;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">ביטול</button>
-        <button id="exitConfirm" style="flex:1;padding:14px;border-radius:16px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">יציאה</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
   document.getElementById('exitCancel').onclick = () => overlay.remove();
-  document.getElementById('exitConfirm').onclick = () => {
-    overlay.remove();
-    window.close();
-    setTimeout(() => {
-      if (!document.hidden) {
-        const msg = document.createElement('div');
-        msg.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#080810;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:inherit;text-align:center;padding:32px;';
-        msg.innerHTML = `
-          <div style="font-size:48px">🏀</div>
-          <div style="font-size:18px;font-weight:800;color:#fff">כדי לצאת מהאפליקציה</div>
-          <div style="font-size:14px;color:#ffffff88;line-height:1.8">לחץ על כפתור הבית<br>או סגור את הלשונית ידנית</div>
-          <button onclick="this.parentElement.remove()" style="margin-top:8px;padding:12px 28px;border-radius:14px;border:1px solid #ffffff20;background:#ffffff10;color:#ffffffcc;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">חזרה לאפליקציה</button>`;
-        document.body.appendChild(msg);
-      }
-    }, 400);
-  };
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  setTimeout(() => { if (document.getElementById('exitDialog')) overlay.remove(); }, 3000);
 }
 
 </script>
