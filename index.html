@@ -116,6 +116,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes slideUpBox { from { transform:translateY(100%); } to { transform:translateY(0); } }
   @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 </style>
 </head>
@@ -392,13 +393,9 @@ function renderGameCard(g, locked) {
   const home = getTeam(g.home), away = getTeam(g.away);
   const pick = predictions[g.id];
   const winnerLabel = pick ? (pick==='home' ? `✓ ${home.short} מנצחת` : `✓ ${away.short} מנצחת`) : '';
-  const dateTime = formatGameDateTime(g);
   return `
     <div class="card ${pick!==undefined?'filled':''}">
-      <div class="card-meta" style="flex-direction:column;gap:4px">
-        <span class="round-tag">מחזור ${g.round}</span>
-        ${dateTime ? `<span style="font-size:11px;color:#ffffff55;font-weight:600">${dateTime}</span>` : ''}
-      </div>
+      <div class="card-meta"><span class="round-tag">מחזור ${g.round}</span></div>
       <div class="teams-pick-row">
         <button class="team-pick-btn ${pick==='home'?'sel-home':''}" style="--tc:${home.color}"
           ${locked?'disabled':''} onclick="pickWinner(${g.id},'home')">
@@ -424,7 +421,6 @@ function renderFinishedCard(g) {
   const home = getTeam(g.home), away = getTeam(g.away);
   const pick = predictions[g.id];
   const winner = g.hs > g.as ? 'home' : 'away';
-  const dateTime = formatGameDateTime(g);
   let predHtml = '';
   if (pick !== undefined) {
     const ok = pick === winner;
@@ -432,10 +428,7 @@ function renderFinishedCard(g) {
   }
   return `
     <div class="card" style="opacity:0.9">
-      <div class="card-meta" style="flex-direction:column;gap:4px">
-        <span class="round-tag">מחזור ${g.round}</span>
-        ${dateTime ? `<span style="font-size:11px;color:#ffffff55;font-weight:600">${dateTime}</span>` : ''}
-      </div>
+      <div class="card-meta"><span class="round-tag">מחזור ${g.round}</span></div>
       <div class="teams-pick-row">
         <div class="team-pick-btn" style="border-color:${winner==='home'?home.color+'88':'#ffffff10'}">
           <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[home.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${home.logo}'"></div>
@@ -1164,7 +1157,7 @@ function renderNewRoundGames() {
         <span style="font-size:12px;font-weight:700;color:#ffffff66">משחק ${i+1}</span>
         <button onclick="removeNewRoundGame(${i})" style="background:none;border:none;color:#f87171;font-size:16px;cursor:pointer;padding:0">✕</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px">
         <select id="ng-home-${i}" onchange="updateNewGame(${i},'home',this.value)"
           style="flex:1;padding:8px 6px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none">
           ${teamOptions}
@@ -1175,41 +1168,19 @@ function renderNewRoundGames() {
           ${teamOptions}
         </select>
       </div>
-      <div style="display:flex;gap:8px">
-        <div style="flex:1">
-          <div style="font-size:10px;color:#ffffff44;margin-bottom:4px">📅 תאריך</div>
-          <input id="ng-date-${i}" type="date" onchange="updateNewGame(${i},'date',this.value)"
-            style="width:100%;padding:7px 8px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none;direction:ltr"
-            onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
-        </div>
-        <div style="flex:1">
-          <div style="font-size:10px;color:#ffffff44;margin-bottom:4px">🕐 שעה</div>
-          <input id="ng-time-${i}" type="time" onchange="updateNewGame(${i},'time',this.value)"
-            style="width:100%;padding:7px 8px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none;direction:ltr"
-            onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
-        </div>
-      </div>
     </div>`).join('');
 
   // Set selected values
   newRoundGames.forEach((g, i) => {
     const hs = document.getElementById(`ng-home-${i}`);
     const as = document.getElementById(`ng-away-${i}`);
-    const ds = document.getElementById(`ng-date-${i}`);
-    const ts = document.getElementById(`ng-time-${i}`);
     if (hs) hs.value = g.home;
     if (as) as.value = g.away;
-    if (ds && g.date) ds.value = g.date;
-    if (ts && g.time) ts.value = g.time;
   });
 }
 
-function updateNewGame(idx, field, val) {
-  if (field === 'home' || field === 'away') {
-    newRoundGames[idx][field] = parseInt(val);
-  } else {
-    newRoundGames[idx][field] = val;
-  }
+function updateNewGame(idx, side, val) {
+  newRoundGames[idx][side] = parseInt(val);
 }
 
 async function saveNewRound() {
@@ -1231,10 +1202,7 @@ async function saveNewRound() {
       const gameId = maxId + i + 1;
       return window._fsSetDoc(window._fsDoc(window._db, 'games', String(gameId)), {
         id: gameId, home: g.home, away: g.away, round: roundNum,
-        status: 'upcoming', hs: 0, as: 0,
-        date: g.date || '',
-        time: g.time || '',
-        updatedAt: Date.now()
+        status: 'upcoming', hs: 0, as: 0, updatedAt: Date.now()
       });
     });
     await Promise.all(saves);
@@ -1727,6 +1695,48 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('SW error:', err));
   });
 }
+
+// ─── לחצן חזרה — אישור יציאה ─────────────────────────────────────────────────
+history.pushState({ page: 'app' }, '');
+
+window.addEventListener('popstate', () => {
+  const adminModal = document.getElementById('adminModal');
+  const userModal  = document.getElementById('userModal');
+  if (adminModal?.style.display === 'flex') {
+    adminModal.style.display = 'none';
+    history.pushState({ page: 'app' }, '');
+    return;
+  }
+  if (userModal?.style.display === 'flex') {
+    userModal.style.display = 'none';
+    history.pushState({ page: 'app' }, '');
+    return;
+  }
+  showExitDialog();
+  history.pushState({ page: 'app' }, '');
+});
+
+function showExitDialog() {
+  if (document.getElementById('exitDialog')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'exitDialog';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000000bb;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#13132a;border-radius:24px 24px 0 0;border:1px solid #ffffff15;width:100%;max-width:480px;padding:28px 24px 44px;text-align:center;animation:slideUpBox 0.25s ease">
+      <div style="font-size:40px;margin-bottom:12px">🏀</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px">לצאת מהאפליקציה?</div>
+      <div style="font-size:13px;color:#ffffff55;margin-bottom:28px">הניחושים שלך שמורים בענן 👍</div>
+      <div style="display:flex;gap:12px">
+        <button id="exitCancel" style="flex:1;padding:14px;border-radius:16px;border:1px solid #ffffff20;background:#ffffff08;color:#ffffffcc;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">ביטול</button>
+        <button id="exitConfirm" style="flex:1;padding:14px;border-radius:16px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">יציאה</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('exitCancel').onclick = () => overlay.remove();
+  document.getElementById('exitConfirm').onclick = () => { overlay.remove(); history.go(-2); };
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
 </script>
 </body>
 </html>
