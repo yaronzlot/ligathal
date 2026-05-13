@@ -155,7 +155,7 @@
   <div class="content" id="content"></div>
   <nav class="nav">
     <button class="nav-btn active" id="tab-predict" onclick="setTab('predict')"><span class="nav-icon">🎯</span>ניחושים</button>
-    <button class="nav-btn" id="tab-live" onclick="setTab('live')"><span class="nav-icon">🔴</span>חי<span class="live-dot"></span></button>
+    <button class="nav-btn" id="tab-live" onclick="setTab('live')"><span class="nav-icon">🔴</span>תוצאות<span class="live-dot"></span></button>
     <button class="nav-btn" id="tab-history" onclick="setTab('history')"><span class="nav-icon">📊</span>היסטוריה</button>
     <button class="nav-btn" id="tab-leaders" onclick="setTab('leaders')"><span class="nav-icon">🏆</span>טבלה</button>
   </nav>
@@ -467,7 +467,7 @@ async function submitPredictions() {
 function renderLive() {
   const live     = liveGames.filter(g => g.status === 'live');
   const upcoming = liveGames.filter(g => g.status === 'upcoming');
-  const finished = liveGames.filter(g => g.status === 'finished');
+  const finished = GAMES.filter(g => g.status === 'finished');
 
   const refreshTime = lastLiveRefresh
     ? lastLiveRefresh.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})
@@ -550,7 +550,7 @@ function renderLive() {
   }
 
   if (finished.length) {
-    html += '<div class="section-label" style="margin-top:16px">✅ סיימו היום</div>';
+    html += '<div class="section-label" style="margin-top:16px">✅ ✅ תוצאות סופיות</div>';
     finished.forEach(g => {
       const home = getTeam(g.home), away = getTeam(g.away);
       const winnerHome = g.hs > g.as;
@@ -1458,7 +1458,7 @@ async function fetchLiveScores() {
       ...extraResults.flatMap(r => r.events || [])
     ];
 
-    if (!allEvents.length) return;
+    if (!allEvents.length) { if (currentTab === 'live') render(); return; }
 
     let anyUpdate = false;
 
