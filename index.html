@@ -1733,7 +1733,22 @@ function showExitDialog() {
     </div>`;
   document.body.appendChild(overlay);
   document.getElementById('exitCancel').onclick = () => overlay.remove();
-  document.getElementById('exitConfirm').onclick = () => { overlay.remove(); history.go(-2); };
+  document.getElementById('exitConfirm').onclick = () => {
+    overlay.remove();
+    window.close();
+    setTimeout(() => {
+      if (!document.hidden) {
+        const msg = document.createElement('div');
+        msg.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#080810;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:inherit;text-align:center;padding:32px;';
+        msg.innerHTML = `
+          <div style="font-size:48px">🏀</div>
+          <div style="font-size:18px;font-weight:800;color:#fff">כדי לצאת מהאפליקציה</div>
+          <div style="font-size:14px;color:#ffffff88;line-height:1.8">לחץ על כפתור הבית<br>או סגור את הלשונית ידנית</div>
+          <button onclick="this.parentElement.remove()" style="margin-top:8px;padding:12px 28px;border-radius:14px;border:1px solid #ffffff20;background:#ffffff10;color:#ffffffcc;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">חזרה לאפליקציה</button>`;
+        document.body.appendChild(msg);
+      }
+    }, 400);
+  };
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
