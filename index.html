@@ -1164,7 +1164,7 @@ function renderNewRoundGames() {
         <span style="font-size:12px;font-weight:700;color:#ffffff66">משחק ${i+1}</span>
         <button onclick="removeNewRoundGame(${i})" style="background:none;border:none;color:#f87171;font-size:16px;cursor:pointer;padding:0">✕</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <select id="ng-home-${i}" onchange="updateNewGame(${i},'home',this.value)"
           style="flex:1;padding:8px 6px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none">
           ${teamOptions}
@@ -1175,19 +1175,41 @@ function renderNewRoundGames() {
           ${teamOptions}
         </select>
       </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <div style="font-size:10px;color:#ffffff44;margin-bottom:4px">📅 תאריך</div>
+          <input id="ng-date-${i}" type="date" onchange="updateNewGame(${i},'date',this.value)"
+            style="width:100%;padding:7px 8px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none;direction:ltr"
+            onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
+        </div>
+        <div style="flex:1">
+          <div style="font-size:10px;color:#ffffff44;margin-bottom:4px">🕐 שעה</div>
+          <input id="ng-time-${i}" type="time" onchange="updateNewGame(${i},'time',this.value)"
+            style="width:100%;padding:7px 8px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none;direction:ltr"
+            onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
+        </div>
+      </div>
     </div>`).join('');
 
   // Set selected values
   newRoundGames.forEach((g, i) => {
     const hs = document.getElementById(`ng-home-${i}`);
     const as = document.getElementById(`ng-away-${i}`);
+    const ds = document.getElementById(`ng-date-${i}`);
+    const ts = document.getElementById(`ng-time-${i}`);
     if (hs) hs.value = g.home;
     if (as) as.value = g.away;
+    if (ds && g.date) ds.value = g.date;
+    if (ts && g.time) ts.value = g.time;
   });
 }
 
-function updateNewGame(idx, side, val) {
-  newRoundGames[idx][side] = parseInt(val);
+function updateNewGame(idx, field, val) {
+  if (field === 'home' || field === 'away') {
+    newRoundGames[idx][field] = parseInt(val);
+  } else {
+    newRoundGames[idx][field] = val;
+  }
 }
 
 async function saveNewRound() {
@@ -1209,7 +1231,10 @@ async function saveNewRound() {
       const gameId = maxId + i + 1;
       return window._fsSetDoc(window._fsDoc(window._db, 'games', String(gameId)), {
         id: gameId, home: g.home, away: g.away, round: roundNum,
-        status: 'upcoming', hs: 0, as: 0, updatedAt: Date.now()
+        status: 'upcoming', hs: 0, as: 0,
+        date: g.date || '',
+        time: g.time || '',
+        updatedAt: Date.now()
       });
     });
     await Promise.all(saves);
