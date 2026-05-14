@@ -935,29 +935,39 @@ async function fetchApiGames() {
   try {
     const leagueId = '4474';
     const season = '2025-2026';
-    const url = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=${leagueId}&s=${season}`;
+
+    // שלב 1: שולפים את 15 המשחקים האחרונים כדי לגלות את מספר הסיבוב הנוכחי
+    const seasonUrl = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=${leagueId}&s=${season}`;
+    const seasonResp = await fetch(seasonUrl);
+    const seasonData = await seasonResp.json();
+
+    let targetRound = apiImportRoundNum;
+    if (seasonData.events && seasonData.events.length) {
+      const maxRound = Math.max(...seasonData.events.map(ev => parseInt(ev.intRound) || 0));
+      if (maxRound > 0) targetRound = maxRound;
+    }
+
+    // שלב 2: שולפים את כל משחקי הסיבוב הנמצא
+    const url = `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${leagueId}&r=${targetRound}&s=${season}`;
     const resp = await fetch(url);
     const data = await resp.json();
 
     if (!data.events || !data.events.length) {
-      resultEl.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">לא נמצאו משחקים בעונה זו</div>`;
+      resultEl.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">לא נמצאו משחקים במחזור ${targetRound}</div>`;
       return;
     }
 
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
-
-    const weekGames = data.events.filter(ev => {
-      const d = new Date(ev.dateEvent);
-      return d >= today && d <= nextWeek;
-    });
+    const weekGames = data.events;
 
     if (!weekGames.length) {
-      resultEl.innerHTML = `<div style="text-align:center;color:#f59e0b;padding:24px;line-height:1.8">⚠️ אין משחקים לשבוע הקרוב<br><span style="font-size:11px;color:#ffffff33">בדוק שהעונה והליגה נכונים</span></div>`;
+      resultEl.innerHTML = `<div style="text-align:center;color:#f59e0b;padding:24px;line-height:1.8">⚠️ אין משחקים במחזור ${targetRound}<br><span style="font-size:11px;color:#ffffff33">בדוק שמספר הסיבוב נכון</span></div>`;
       return;
     }
+
+    // עדכון שדה מספר הסיבוב בממשק
+    const roundInput = document.getElementById('apiRoundNum');
+    if (roundInput) roundInput.value = targetRound;
+    apiImportRoundNum = targetRound;
 
     // התאמת קבוצות
     apiImportPreview = weekGames.map(ev => {
