@@ -397,7 +397,7 @@ function renderGameCard(g, locked) {
     <div class="card ${pick!==undefined?'filled':''}">
       <div class="card-meta" style="flex-direction:column;gap:4px">
         <span class="round-tag">מחזור ${g.round}</span>
-        ${g.date ? `<span style="font-size:11px;color:#ffffff55">${formatGameDateTime(g)}</span>` : ''}
+        ${g.date && g.date !== 'undefined' ? `<span style="font-size:12px;color:#ffd700;font-weight:700">📅 ${formatGameDateTime(g)}</span>` : ''}
       </div>
       <div class="teams-pick-row">
         <button class="team-pick-btn ${pick==='home'?'sel-home':''}" style="--tc:${home.color}"
@@ -433,7 +433,7 @@ function renderFinishedCard(g) {
     <div class="card" style="opacity:0.9">
       <div class="card-meta" style="flex-direction:column;gap:4px">
         <span class="round-tag">מחזור ${g.round}</span>
-        ${g.date ? `<span style="font-size:11px;color:#ffffff55">${formatGameDateTime(g)}</span>` : ''}
+        ${g.date && g.date !== 'undefined' ? `<span style="font-size:12px;color:#ffd700;font-weight:700">📅 ${formatGameDateTime(g)}</span>` : ''}
       </div>
       <div class="teams-pick-row">
         <div class="team-pick-btn" style="border-color:${winner==='home'?home.color+'88':'#ffffff10'}">
@@ -1147,26 +1147,16 @@ async function updateAllDates(btn) {
 
     let updated = 0, notFound = 0;
     const saves = [];
-    const debugLines = [];
-
-    debugLines.push(`משחקים ב-Firebase: ${GAMES.length}`);
-    debugLines.push(`אירועים מה-API: ${allEvents.length}`);
-    if (GAMES[0]) debugLines.push(`דוגמת משחק: home=${GAMES[0].home} away=${GAMES[0].away} date="${GAMES[0].date}"`);
-    if (allEvents[0]) debugLines.push(`דוגמת API: ${allEvents[0].strHomeTeam} vs ${allEvents[0].strAwayTeam}`);
 
     GAMES.forEach(game => {
-      // דלג רק אם יש תאריך אמיתי (לא undefined, לא null, לא '')
       const hasDate = game.date && game.date !== 'undefined' && game.date !== '';
-      if (hasDate) { debugLines.push(`⏭️ יש תאריך: ${game.home} vs ${game.away}`); return; }
+      if (hasDate) return;
       const ev = allEvents.find(e => {
         const homeId = matchTeamName(e.strHomeTeam);
         const awayId = matchTeamName(e.strAwayTeam);
         return homeId === game.home && awayId === game.away;
       });
-      if (!ev) {
-        debugLines.push(`❌ לא נמצא: home=${game.home} away=${game.away} r=${game.round}`);
-        notFound++; return;
-      }
+      if (!ev) { notFound++; return; }
       updated++;
       saves.push(
         window._fsSetDoc(window._fsDoc(window._db, 'games', String(game.id)), {
@@ -1181,12 +1171,9 @@ async function updateAllDates(btn) {
     await Promise.all(saves);
 
     resultEl.innerHTML = `
-      <div style="background:#22c55e18;border:1px solid #22c55e44;border-radius:12px;padding:14px;text-align:center;margin-bottom:12px">
+      <div style="background:#22c55e18;border:1px solid #22c55e44;border-radius:12px;padding:14px;text-align:center">
         <div style="font-size:16px;font-weight:900;color:#22c55e;margin-bottom:4px">✅ עודכנו ${updated} משחקים</div>
         ${notFound ? `<div style="font-size:12px;color:#f59e0b">${notFound} משחקים לא נמצאו ב-API</div>` : ''}
-      </div>
-      <div style="background:#0a0a1a;border:1px solid #ffffff15;border-radius:12px;padding:12px;font-size:10px;color:#ffffff66;line-height:1.8;direction:ltr;text-align:left;max-height:300px;overflow-y:auto">
-        ${debugLines.map(l => `<div>${l}</div>`).join('')}
       </div>`;
     showToast(`✅ עודכנו ${updated} משחקים עם תאריכים!`, '#22c55e');
     btn.textContent = '📅 שלוף ועדכן תאריכים';
