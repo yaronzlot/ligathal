@@ -1134,7 +1134,7 @@ async function updateAllDates(btn) {
     // שולפים את כל הסיבובים הקיימים במשחקים
     const rounds = [...new Set(GAMES.map(g => g.round))];
 
-    resultEl.innerHTML = `<div style="text-align:center;color:#ffffff55;font-size:13px;padding:12px">שולף ${rounds.length} סיבובים...</div>`;
+    resultEl.innerHTML = `<div style="text-align:center;color:#ffffff55;font-size:13px;padding:12px">שולף ${rounds.length} סיבובים (${Math.min(...rounds)}–${Math.max(...rounds)})...</div>`;
 
     // שליפה מקבילה של כל הסיבובים
     const fetches = rounds.map(r =>
@@ -1155,7 +1155,9 @@ async function updateAllDates(btn) {
     if (allEvents[0]) debugLines.push(`דוגמת API: ${allEvents[0].strHomeTeam} vs ${allEvents[0].strAwayTeam}`);
 
     GAMES.forEach(game => {
-      if (game.date) { debugLines.push(`⏭️ יש תאריך: ${game.home} vs ${game.away}`); return; }
+      // דלג רק אם יש תאריך אמיתי (לא undefined, לא null, לא '')
+      const hasDate = game.date && game.date !== 'undefined' && game.date !== '';
+      if (hasDate) { debugLines.push(`⏭️ יש תאריך: ${game.home} vs ${game.away}`); return; }
       const ev = allEvents.find(e => {
         const homeId = matchTeamName(e.strHomeTeam);
         const awayId = matchTeamName(e.strAwayTeam);
