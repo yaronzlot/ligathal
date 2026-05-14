@@ -877,22 +877,35 @@ function renderAdminContent() {
 // ── יבוא מ-API ──
 // מיפוי שמות קבוצות מ-TheSportsDB לקבוצות באפליקציה
 const TEAM_NAME_MAP = {
-  'maccabi tel aviv': 1, 'מכבי תל אביב': 1, 'maccabi t/a': 1,
-  'hapoel tel aviv': 2, 'הפועל תל אביב': 2,
+  // מכבי תל אביב - id 1
+  'maccabi tel aviv': 1, 'מכבי תל אביב': 1, 'maccabi t/a': 1, 'maccabi tel aviv bc': 1,
+  // הפועל תל אביב - id 2
+  'hapoel tel aviv': 2, 'הפועל תל אביב': 2, 'hapoel tel aviv bc': 2,
+  // הפועל ירושלים - id 3
   'hapoel jerusalem': 3, 'הפועל ירושלים': 3, 'hapoel jerusalem bc': 3,
-  'holon': 4, 'ironi holon': 4, 'עירוני חולון': 4,
-  'nes ziona': 5, 'נס ציונה': 5, 'maccabi nes ziona': 5,
-  'netanya': 6, 'maccabi netanya': 6, 'נתניה': 6,
-  'maccabi ramat gan': 7,
-  'maccabi rishon lezion': 15, 'מכבי ראשון לציון': 15, 'maccabi rishon le-zion': 15, 'rishon lezion': 15, 'rishon le-zion': 15,
-
-  'herzliya': 9, 'עירוני הרצליה': 9, 'ironi herzliya': 9,
-  'galil elyon': 10, 'גליל עליון': 10,
-  'ironi kiryat ata': 11, 'קריית אתא': 11,
-  'maccabi be\'er sheva': 12, 'מכבי באר שבע': 12, 'beer sheva': 12,
-  'hapoel haemek': 13, 'הפועל העמק': 13,
-  'maccabi raanana': 14, 'מכבי רעננה': 14, 'raanana': 14,
-  'maccabi rishon': 15, 'מכבי ראשל"צ': 15,
+  // חולון - id 4
+  'holon': 4, 'ironi holon': 4, 'עירוני חולון': 4, 'hapoel holon': 4, 'hapoel holon bc': 4,
+  // נס ציונה - id 5
+  'nes ziona': 5, 'נס ציונה': 5, 'maccabi nes ziona': 5, 'ironi ness ziona': 5, 'ironi ness ziona bc': 5,
+  // נתניה - id 6
+  'netanya': 6, 'maccabi netanya': 6, 'נתניה': 6, 'elitzur netanya': 6, 'elitzur netanya b.c.': 6, 'elitzur netanya bc': 6,
+  // מכבי רמת גן - id 7
+  'maccabi ramat gan': 7, 'maccabi ironi ramat gan': 7, 'מכבי רמת גן': 7,
+  // הרצליה - id 9
+  'herzliya': 9, 'עירוני הרצליה': 9, 'ironi herzliya': 9, 'bnei herzliya': 9, 'bnei herzliya bc': 9,
+  // גליל עליון - id 10
+  'galil elyon': 10, 'גליל עליון': 10, 'hapoel galil elyon': 10, 'hapoel galil elyon bc': 10,
+  // קריית אתא - id 11
+  'ironi kiryat ata': 11, 'קריית אתא': 11, 'ironi kiryat ata b.c.': 11, 'ironi kiryat ata bc': 11,
+  // באר שבע - id 12
+  'maccabi be\'er sheva': 12, 'מכבי באר שבע': 12, 'beer sheva': 12, 'hapoel beer sheva': 12, 'hapoel beer sheva bc': 12, 'hapoel be\'er sheva bc': 12,
+  // הפועל העמק - id 13
+  'hapoel haemek': 13, 'הפועל העמק': 13, 'hapoel ha\'emek': 13, 'hapoel haemek bc': 13,
+  // מכבי רעננה - id 14
+  'maccabi raanana': 14, 'מכבי רעננה': 14, 'raanana': 14, 'maccabi ra\'anana': 14,
+  // מכבי ראשון לציון - id 15
+  'maccabi rishon lezion': 15, 'מכבי ראשון לציון': 15, 'maccabi rishon le-zion': 15, 'rishon lezion': 15,
+  'rishon le-zion': 15, 'maccabi rishon': 15, 'מכבי ראשל"צ': 15, 'maccabi rishon lezion bc': 15,
 };
 
 function matchTeamName(name) {
