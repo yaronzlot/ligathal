@@ -395,7 +395,10 @@ function renderGameCard(g, locked) {
   const winnerLabel = pick ? (pick==='home' ? `✓ ${home.short} מנצחת` : `✓ ${away.short} מנצחת`) : '';
   return `
     <div class="card ${pick!==undefined?'filled':''}">
-      <div class="card-meta"><span class="round-tag">מחזור ${g.round}</span></div>
+      <div class="card-meta" style="flex-direction:column;gap:4px">
+        <span class="round-tag">מחזור ${g.round}</span>
+        ${g.date ? `<span style="font-size:11px;color:#ffffff55">${formatGameDateTime(g)}</span>` : ''}
+      </div>
       <div class="teams-pick-row">
         <button class="team-pick-btn ${pick==='home'?'sel-home':''}" style="--tc:${home.color}"
           ${locked?'disabled':''} onclick="pickWinner(${g.id},'home')">
@@ -428,7 +431,10 @@ function renderFinishedCard(g) {
   }
   return `
     <div class="card" style="opacity:0.9">
-      <div class="card-meta"><span class="round-tag">מחזור ${g.round}</span></div>
+      <div class="card-meta" style="flex-direction:column;gap:4px">
+        <span class="round-tag">מחזור ${g.round}</span>
+        ${g.date ? `<span style="font-size:11px;color:#ffffff55">${formatGameDateTime(g)}</span>` : ''}
+      </div>
       <div class="teams-pick-row">
         <div class="team-pick-btn" style="border-color:${winner==='home'?home.color+'88':'#ffffff10'}">
           <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[home.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${home.logo}'"></div>
@@ -844,6 +850,7 @@ function renderAdminContent() {
       <button style="${tabStyle('results')}" onclick="setAdminTab('results')">📋 תוצאות</button>
       <button style="${tabStyle('api-import')}" onclick="setAdminTab('api-import')">🌐 יבוא מ-API</button>
       <button style="${tabStyle('new-round')}" onclick="setAdminTab('new-round')">➕ מחזור חדש</button>
+      <button style="${tabStyle('update-dates')}" onclick="setAdminTab('update-dates')">📅 עדכן תאריכים</button>
       <button style="${tabStyle('unlock')}" onclick="setAdminTab('unlock')">🔓 פתיחה מחדש</button>
       <button style="${tabStyle('reset')}" onclick="setAdminTab('reset')">🗑️ איפוס</button>
     </div>`;
@@ -854,6 +861,8 @@ function renderAdminContent() {
     html += renderAdminApiImport();
   } else if (adminTab === 'new-round') {
     html += renderAdminNewRound();
+  } else if (adminTab === 'update-dates') {
+    html += renderAdminUpdateDates();
   } else if (adminTab === 'unlock') {
     html += renderAdminUnlock();
   } else if (adminTab === 'reset') {
@@ -1081,7 +1090,90 @@ async function saveApiImport() {
   }
 }
 
-// ── תוצאות ──
+// ── עדכון תאריכים ──
+function renderAdminUpdateDates() {
+  const noDate = GAMES.filter(g => !g.date);
+  return `
+    <div style="font-size:13px;color:#ffffff66;line-height:1.6;margin-bottom:16px">
+      שליפת תאריכי משחקים מ-TheSportsDB ועדכון ב-Firebase למשחקים שחסר להם תאריך.
+    </div>
+    <div style="background:#13132a;border-radius:14px;border:1px solid #ffffff12;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;color:#ffffffbb">משחקים ללא תאריך: <span style="color:#f59e0b;font-weight:900">${noDate.length}</span></div>
+      <div style="font-size:11px;color:#ffffff44;margin-top:4px">מתוך סה"כ ${GAMES.length} משחקים ב-Firebase</div>
+    </div>
+    <button onclick="updateAllDates(this)"
+      style="width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;margin-bottom:14px;box-shadow:0 4px 20px #22c55e33">
+      📅 שלוף ועדכן תאריכים
+    </button>
+    <div id="updateDatesResult"></div>
+  `;
+}
+
+async function updateAllDates(btn) {
+  const resultEl = document.getElementById('updateDatesResult');
+  btn.disabled = true;
+  btn.textContent = '⏳ שולף...';
+
+  const leagueId = '4474';
+  const season = '2025-2026';
+
+  try {
+    // שולפים את כל הסיבובים הקיימים במשחקים
+    const rounds = [...new Set(GAMES.map(g => g.round))];
+
+    resultEl.innerHTML = `<div style="text-align:center;color:#ffffff55;font-size:13px;padding:12px">שולף ${rounds.length} סיבובים...</div>`;
+
+    // שליפה מקבילה של כל הסיבובים
+    const fetches = rounds.map(r =>
+      fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${leagueId}&r=${r}&s=${season}`)
+        .then(res => res.json())
+        .catch(() => ({ events: [] }))
+    );
+    const results = await Promise.all(fetches);
+    const allEvents = results.flatMap(r => r.events || []);
+
+    let updated = 0, notFound = 0;
+    const saves = [];
+
+    GAMES.forEach(game => {
+      if (game.date) return; // כבר יש תאריך — דלג
+      const ev = allEvents.find(e => {
+        const homeId = matchTeamName(e.strHomeTeam);
+        const awayId = matchTeamName(e.strAwayTeam);
+        return homeId === game.home && awayId === game.away;
+      });
+      if (!ev) { notFound++; return; }
+      updated++;
+      saves.push(
+        window._fsSetDoc(window._fsDoc(window._db, 'games', String(game.id)), {
+          ...game,
+          date: ev.dateEvent || '',
+          time: ev.strTime || '',
+          updatedAt: Date.now()
+        })
+      );
+    });
+
+    await Promise.all(saves);
+
+    resultEl.innerHTML = `
+      <div style="background:#22c55e18;border:1px solid #22c55e44;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:16px;font-weight:900;color:#22c55e;margin-bottom:4px">✅ עודכנו ${updated} משחקים</div>
+        ${notFound ? `<div style="font-size:12px;color:#f59e0b">${notFound} משחקים לא נמצאו ב-API</div>` : ''}
+      </div>`;
+    showToast(`✅ עודכנו ${updated} משחקים עם תאריכים!`, '#22c55e');
+    btn.textContent = '📅 שלוף ועדכן תאריכים';
+    btn.disabled = false;
+
+  } catch(err) {
+    console.error(err);
+    resultEl.innerHTML = `<div style="text-align:center;color:#f87171;padding:16px">שגיאה: ${err.message}</div>`;
+    btn.textContent = '📅 שלוף ועדכן תאריכים';
+    btn.disabled = false;
+  }
+}
+
+
 function renderAdminResults() {
   if (!GAMES.length) return '<div style="text-align:center;color:#ffffff33;padding:30px">אין משחקים עדיין.<br>הוסף מחזור חדש תחילה.</div>';
   const rounds = getRounds();
