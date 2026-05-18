@@ -569,7 +569,7 @@ function renderLive() {
 
   if (finished.length) {
     html += '<div class="section-label" style="margin-top:16px">✅ תוצאות סופיות</div>';
-    finished.forEach(g => {
+    [...finished].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(g => {
       const home = getTeam(g.home), away = getTeam(g.away);
       const winnerHome = g.hs > g.as;
       html += `
