@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#080810">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ווינר סל">
+<meta name="description" content="ניחוש מנצחת · ליגת ווינר סל">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>ניחוש מנצחת · ליגת ווינר סל</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #080810; --card: #13132a; --card2: #0f0f22;
+    --orange: #ff4500; --gold: #ffd700; --green: #22c55e;
+    --blue: #3b82f6; --red: #f87171;
+    --text: #fff; --muted: #ffffff55; --border: #ffffff12;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, sans-serif; direction: rtl; overflow: hidden; touch-action: pan-y; }
+  .content { -webkit-overflow-scrolling: touch; }
+  #app { height: 100vh; display: flex; flex-direction: column; position: relative; }
+  .bg-glow { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse 60% 40% at 20% 10%, #ff450012, transparent),
+                radial-gradient(ellipse 50% 50% at 80% 80%, #ffd70010, transparent); }
+  .header { position: relative; z-index: 10; background: #0d0d1a; border-bottom: 1px solid var(--border);
+    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .notif-btn { font-size: 20px; background: #ffffff10; border: 1px solid #ffffff20; border-radius: 12px;
+    width: 42px; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .notif-btn.on { background: #ffd70022; border-color: #ffd70066; }
+  .content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px; position: relative; z-index: 1; padding-bottom: 100px; }
+  .nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; background: #0d0d1a; border-top: 1px solid var(--border); display: flex; flex-shrink: 0; }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 14px; border: none;
+    background: transparent; color: #ffffff44; cursor: pointer; font-family: inherit; position: relative; transition: color 0.2s; font-size: 10px; font-weight: 600; }
+  .nav-btn.active { color: var(--gold); }
+  .nav-icon { font-size: 20px; margin-bottom: 2px; }
+  .live-dot { position: absolute; top: 8px; right: calc(50% - 12px); width: 7px; height: 7px; border-radius: 50%;
+    background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: blink 1.5s infinite; }
+  .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 999; padding: 12px 20px;
+    border-radius: 14px; font-size: 13px; font-weight: 700; color: #fff; box-shadow: 0 4px 24px #00000066;
+    white-space: nowrap; animation: slideDown 0.3s ease; pointer-events: none; }
+  .pills { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
+  .pills::-webkit-scrollbar { display: none; }
+  .pill { flex-shrink: 0; padding: 8px 14px; border-radius: 12px; border: 1px solid var(--border);
+    background: #ffffff08; color: #ffffff66; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .pill.active { background: linear-gradient(135deg, var(--orange), #ff8c00); border-color: transparent; color: #fff; box-shadow: 0 4px 20px #ff450044; }
+  .section-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .card { background: linear-gradient(135deg, var(--card), var(--card2)); border-radius: 18px; border: 1px solid var(--border);
+    padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 20px #00000030; }
+  .card.filled { border-color: #ffd70030; box-shadow: 0 4px 24px #ffd70015; }
+  .card-meta { display: flex; justify-content: center; margin-bottom: 12px; }
+  .round-tag { background: #ff450022; color: #ff8c00; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+  .live-chip { background: #ff450022; color: var(--orange); border-radius: 8px; padding: 2px 10px; font-size: 12px; font-weight: 800; }
+  .teams-pick-row { display: flex; align-items: center; gap: 8px; }
+  .team-pick-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px;
+    border-radius: 14px; border: 2px solid #ffffff15; background: #ffffff05; cursor: pointer; font-family: inherit; transition: all 0.2s; position: relative; }
+  .team-pick-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .team-pick-btn.sel-home { border-color: var(--tc, #ff4500); background: color-mix(in srgb, var(--tc, #ff4500) 15%, transparent); box-shadow: 0 0 18px color-mix(in srgb, var(--tc, #ff4500) 40%, transparent); }
+  .team-pick-btn.sel-away { border-color: var(--tc, #3b82f6); background: color-mix(in srgb, var(--tc, #3b82f6) 15%, transparent); box-shadow: 0 0 18px color-mix(in srgb, var(--tc, #3b82f6) 40%, transparent); }
+  .team-badge { width: 44px; height: 44px; border-radius: 12px; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .team-name { font-size: 11px; font-weight: 700; color: #ffffffcc; text-align: center; line-height: 1.3; }
+  .team-label { font-size: 10px; color: #ffffff33; }
+  .check-badge { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--green); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; }
+  .vs-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .vs-text { font-size: 16px; font-weight: 900; color: #ffffff22; }
+  .pred-tag { margin-top: 10px; font-size: 12px; color: #ffd700aa; text-align: center; font-weight: 700; padding-top: 8px; border-top: 1px solid #ffffff0f; }
+  .winner-badge { font-size: 10px; font-weight: 800; color: var(--gold); background: #ffd70018; border-radius: 6px; padding: 2px 6px; margin-top: 4px; }
+  .live-score-box { display: flex; align-items: center; gap: 10px; }
+  .live-num { font-size: 32px; font-weight: 900; transition: all 0.3s; }
+  .live-num.flash { color: var(--gold); transform: scale(1.2); }
+  .dash { font-size: 18px; color: #ffffff33; }
+  .submit-area { margin-top: 14px; }
+  .prog-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .prog-label { font-size: 12px; color: var(--muted); text-align: center; }
+  .prog-track { height: 5px; background: #ffffff10; border-radius: 10px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--gold)); border-radius: 10px; transition: width 0.3s ease; }
+  .submit-btn { width: 100%; padding: 15px; border-radius: 16px; border: none; background: linear-gradient(135deg, var(--orange), var(--gold));
+    color: #000; font-size: 16px; font-weight: 900; cursor: pointer; font-family: inherit; box-shadow: 0 8px 32px #ff450044; transition: transform 0.1s; }
+  .submit-btn:active { transform: scale(0.97); }
+  .submitted-banner { background: #22c55e18; border: 1px solid #22c55e44; border-radius: 14px; padding: 14px 16px;
+    font-size: 14px; color: var(--green); font-weight: 600; text-align: center; margin-top: 12px; }
+  .empty { text-align: center; color: #ffffff33; padding: 40px 0; font-size: 15px; line-height: 2; }
+  .stats-row { display: flex; gap: 10px; margin-bottom: 18px; }
+  .stat-box { flex: 1; background: var(--card); border-radius: 16px; border: 1px solid; padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .stat-val { font-size: 18px; font-weight: 900; }
+  .stat-label { font-size: 9px; color: var(--muted); font-weight: 600; text-align: center; }
+  .hist-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
+  .hist-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; cursor: pointer; }
+  .hist-round { font-size: 14px; font-weight: 700; color: #ffffffcc; }
+  .hist-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .hist-right { display: flex; align-items: center; gap: 12px; }
+  .hist-points { font-size: 18px; font-weight: 900; }
+  .hist-details { padding: 0 16px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid; background: #ffffff05; font-size: 12px; }
+  .leader-row { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 8px; }
+  .leader-row.me { border-color: #3b82f644; background: #3b82f610; }
+  .leader-rank { font-size: 20px; width: 30px; text-align: center; }
+  .leader-avatar { font-size: 26px; }
+  .leader-info { flex: 1; }
+  .leader-name { font-size: 14px; font-weight: 700; }
+  .leader-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .leader-pts-val { font-size: 22px; font-weight: 900; display: flex; flex-direction: column; align-items: flex-end; }
+  .leader-pts-lbl { font-size: 10px; font-weight: 600; color: var(--muted); }
+  .invite-box { margin-top: 18px; background: linear-gradient(135deg, #1a1a3a, var(--card)); border-radius: 18px; border: 1px solid #3b82f633; padding: 18px 16px; text-align: center; }
+  .invite-title { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+  .invite-sub { font-size: 13px; color: #ffffff66; margin-bottom: 14px; }
+  .invite-btn { padding: 10px 24px; border-radius: 12px; border: 1px solid #3b82f666; background: #3b82f622; color: var(--blue); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .avatar-btn { width: 52px; height: 52px; border-radius: 16px; font-size: 26px; border: 2px solid #ffffff15; background: #ffffff08; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+  .avatar-btn.picked { border-color: var(--gold); background: #ffd70022; transform: scale(1.15); }
+  .loading-spinner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 12px; color: #ffffff44; font-size: 13px; }
+  .spinner { width: 32px; height: 32px; border: 3px solid #ffffff15; border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes slideUpBox { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+</style>
+</head>
+<body>
+
+<!-- הרשמה -->
+<div id="regOverlay" style="position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;">
+  <div style="font-size:56px;margin-bottom:16px;animation:bounce 1.5s infinite ease-in-out">🏀</div>
+  <div style="font-size:26px;font-weight:900;margin-bottom:6px;text-align:center">ברוך הבא לליגת ווינר סל!</div>
+  <div style="font-size:14px;color:#ffffff66;margin-bottom:28px;text-align:center">בחר כינוי ואמוג׳י — ותתחרה עם חברים</div>
+  <div id="avatarPicker" style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;justify-content:center"></div>
+  <div style="width:100%;max-width:320px;margin-bottom:20px;position:relative">
+    <input id="nicknameInput" type="text" maxlength="16" placeholder="הכינוי שלך..." oninput="onNicknameInput()"
+      style="width:100%;padding:16px 18px;border-radius:16px;border:2px solid #ffffff20;background:#ffffff08;color:#fff;font-size:18px;font-family:inherit;outline:none;text-align:right;direction:rtl"
+      onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
+    <span id="charCount" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:11px;color:#ffffff33">0/16</span>
+  </div>
+  <button id="regBtn" disabled onclick="registerUser()"
+    style="width:100%;max-width:320px;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 8px 32px #ff450044;opacity:0.35;transition:opacity 0.2s">
+    בואו נשחק! 🎯
+  </button>
+</div>
+
+<div id="app">
+  <div class="bg-glow"></div>
+  <div id="toast" class="toast" style="display:none"></div>
+  <header class="header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:28px;cursor:default;-webkit-user-select:none;user-select:none" id="adminTrigger" onmousedown="startAdminHold()" onmouseup="cancelAdminHold()" onmouseleave="cancelAdminHold()" ontouchstart="startAdminHold()" ontouchend="cancelAdminHold()">🏀</span>
+      <div>
+        <div style="font-size:18px;font-weight:800">ליגת ווינר סל</div>
+        <div style="font-size:11px;color:#ffd70099;margin-top:2px">ניחוש מנצחת · עונה 2025/26</div>
+      </div>
+    </div>
+    <button class="notif-btn" id="notifBtn" onclick="toggleNotif()">🔕</button>
+  </header>
+  <div class="content" id="content"></div>
+  <nav class="nav">
+    <button class="nav-btn active" id="tab-predict" onclick="setTab('predict')"><span class="nav-icon">🎯</span>ניחושים</button>
+    <button class="nav-btn" id="tab-live" onclick="setTab('live')"><span class="nav-icon">🔴</span>תוצאות<span class="live-dot"></span></button>
+    <a class="nav-btn" href="https://basket.co.il/table.asp" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><span class="nav-icon">📋</span>טבלה</a>
+    <button class="nav-btn" id="tab-history" onclick="setTab('history')"><span class="nav-icon">📊</span>היסטוריה</button>
+    <button class="nav-btn" id="tab-leaders" onclick="setTab('leaders')"><span class="nav-icon">🏆</span>דירוג</button>
+  </nav>
+</div>
+
+<!-- מודאל ניחושי משתמש -->
+<div id="userModal" style="display:none;position:fixed;inset:0;z-index:200;background:#000000bb;align-items:flex-end;justify-content:center" onclick="closeUserModal(event)">
+  <div id="userModalBox" style="background:#13132a;border-radius:24px 24px 0 0;border:1px solid #ffffff15;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:20px 18px 36px;position:relative">
+    <div style="width:40px;height:4px;background:#ffffff22;border-radius:4px;margin:0 auto 18px"></div>
+    <div id="userModalContent"></div>
+  </div>
+</div>
+
+<!-- מודאל ניהול -->
+<div id="adminModal" style="display:none;position:fixed;inset:0;z-index:300;background:#000000cc;align-items:flex-end;justify-content:center" onclick="closeAdminModal(event)">
+  <div style="background:#0d0d1a;border-radius:24px 24px 0 0;border:1px solid #ffd70033;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px 18px 40px;position:relative">
+    <div style="width:40px;height:4px;background:#ffffff22;border-radius:4px;margin:0 auto 18px"></div>
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px;text-align:center">⚙️ ניהול תוצאות</div>
+    <div style="font-size:12px;color:#ffffff44;text-align:center;margin-bottom:20px">עדכון תוצאות סופיות ומחשוב ניקוד</div>
+    <div id="adminContent"></div>
+  </div>
+</div>
+
+<!-- מודאל סיסמה -->
+<div id="pwModal" style="display:none;position:fixed;inset:0;z-index:400;background:#000000cc;align-items:center;justify-content:center">
+  <div style="background:#13132a;border-radius:20px;border:1px solid #ffffff15;padding:28px 24px;width:280px;text-align:center">
+    <div style="font-size:32px;margin-bottom:12px">🔐</div>
+    <div style="font-size:16px;font-weight:800;margin-bottom:16px">הכנס סיסמת ניהול</div>
+    <input id="pwInput" type="password" placeholder="סיסמה..." maxlength="20"
+      style="width:100%;padding:12px 14px;border-radius:12px;border:2px solid #ffffff20;background:#ffffff08;color:#fff;font-size:18px;font-family:inherit;outline:none;text-align:center;letter-spacing:4px;direction:ltr"
+      onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'"
+      onkeydown="if(event.key==='Enter')checkAdminPw()" />
+    <div id="pwError" style="color:#f87171;font-size:12px;margin-top:8px;display:none">סיסמה שגויה ❌</div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button onclick="document.getElementById('pwModal').style.display='none'"
+        style="flex:1;padding:11px;border-radius:12px;border:1px solid #ffffff20;background:transparent;color:#ffffff66;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">ביטול</button>
+      <button onclick="checkAdminPw()"
+        style="flex:1;padding:11px;border-radius:12px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">כניסה</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, orderBy, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBMQPbRgdYTIrcBZ4w5EbH64elKmpfHq84",
+  authDomain: "ligathal.firebaseapp.com",
+  projectId: "ligathal",
+  storageBucket: "ligathal.firebasestorage.app",
+  messagingSenderId: "909993829696",
+  appId: "1:909993829696:web:2d0c34e8d421d566e146a5"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+window._db = db;
+window._fsDoc = doc;
+window._fsSetDoc = setDoc;
+window._fsGetDoc = getDoc;
+window._fsCollection = collection;
+window._fsOnSnapshot = onSnapshot;
+window._fsQuery = query;
+window._fsOrderBy = orderBy;
+window._fsDeleteDoc = deleteDoc;
+window._fsGetDocs = getDocs;
+window._firebaseReady = true;
+window.dispatchEvent(new Event('firebaseReady'));
+</script>
+
+<script src="logos.js"></script>
+<script>
+// ─── TEAMS ───────────────────────────────────────────────────────────────────
+const TEAMS = [
+  { id:1,  short:'מכבי ת"א',     color:'#FFD700', logo:'🏆' },
+  { id:2,  short:'הפועל ת"א',    color:'#DC143C', logo:'🦅' },
+  { id:3,  short:'הפועל י-ם',    color:'#FF4500', logo:'🔥' },
+  { id:4,  short:'חולון',         color:'#1E90FF', logo:'💙' },
+  { id:5,  short:'נס ציונה',      color:'#228B22', logo:'💎' },
+  { id:6,  short:'נתניה',         color:'#8B4513', logo:'⚡' },
+  { id:7,  short:'מכבי ר"ג',     color:'#4169E1', logo:'🔵' },
+  { id:9,  short:'הרצליה',        color:'#FF8C00', logo:'🏀' },
+  { id:10, short:'גליל עליון',    color:'#2E8B57', logo:'🌿' },
+  { id:11, short:'קריית אתא',     color:'#9400D3', logo:'🟣' },
+  { id:12, short:'באר שבע',       color:'#FF6347', logo:'🌵' },
+  { id:13, short:'הפועל העמק',    color:'#DAA520', logo:'🟡' },
+  { id:14, short:'מכבי רעננה',   color:'#00CED1', logo:'🌊' },
+  { id:15, short:'מכבי ראשל"צ',  color:'#FF69B4', logo:'🌸' },
+];
+
+// GAMES נטען דינמית מ-Firebase
+let GAMES = [];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let currentTab = 'predict', activeRound = null, notifOn = false;
+let predictions = {};   // { gameId: 'home'|'away' }
+let submitted = {};     // { round: true }
+let currentUser = null; // { id, name, avatar }
+let leaderboard = [];   // מ-Firestore
+let expandedRound = null;
+let liveGames = [];
+
+/* TEAM_LOGOS loaded from logos.js */
+
+const getTeam = id => TEAMS.find(t => t.id === id);
+const getRounds = () => [...new Set(GAMES.map(g => g.round))].sort((a,b) => a-b);
+function formatGameDateTime(g) {
+  if (!g.date) return '';
+  const d = new Date(g.date + (g.time ? 'T' + g.time : 'T00:00'));
+  const dateStr = d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', weekday: 'short' });
+  const timeStr = g.time ? d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
+  return timeStr ? dateStr + ' u00b7 ' + timeStr : dateStr;
+}
+
+function showToast(msg, color='#22c55e') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.background = color; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+function toggleNotif() {
+  notifOn = !notifOn;
+  const btn = document.getElementById('notifBtn');
+  btn.textContent = notifOn ? '🔔' : '🔕';
+  btn.className = 'notif-btn' + (notifOn ? ' on' : '');
+  showToast(notifOn ? '🔔 התראות הופעלו!' : '🔕 התראות כובו', notifOn ? '#22c55e' : '#3b82f6');
+}
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  render();
+}
+function setRound(r) { activeRound = r; render(); }
+function render() {
+  const c = document.getElementById('content');
+  if (currentTab === 'predict')      c.innerHTML = renderPredict();
+  else if (currentTab === 'live')    c.innerHTML = renderLive();
+  else if (currentTab === 'history') c.innerHTML = renderHistory();
+  else if (currentTab === 'leaders') c.innerHTML = renderLeaders();
+}
+
+// ─── FIREBASE HELPERS ─────────────────────────────────────────────────────────
+async function savePredictionsToFirebase() {
+  if (!window._db || !currentUser) return;
+  const db = window._db;
+  const correct = countCorrect();
+  const points = correct * 3;
+  await window._fsSetDoc(window._fsDoc(db, 'users', currentUser.id), {
+    name: currentUser.name,
+    avatar: currentUser.avatar,
+    predictions,
+    submitted,
+    points,
+    correct,
+    updatedAt: Date.now()
+  });
+}
+
+async function loadMyDataFromFirebase() {
+  if (!window._db || !currentUser) return;
+  const db = window._db;
+  const snap = await window._fsGetDoc(window._fsDoc(db, 'users', currentUser.id));
+  if (snap.exists()) {
+    const data = snap.data();
+    predictions = data.predictions || {};
+    submitted = data.submitted || {};
+  }
+}
+
+function listenLeaderboard() {
+  if (!window._db) return;
+  const db = window._db;
+  const q = window._fsQuery(window._fsCollection(db, 'users'), window._fsOrderBy('points', 'desc'));
+  window._fsOnSnapshot(q, snap => {
+    leaderboard = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (currentTab === 'leaders') render();
+  });
+}
+
+function countCorrect() {
+  let c = 0;
+  GAMES.filter(g => g.status === 'finished').forEach(g => {
+    const pick = predictions[g.id];
+    if (!pick) return;
+    const winner = g.hs > g.as ? 'home' : 'away';
+    if (pick === winner) c++;
+  });
+  return c;
+}
+
+// ─── PREDICT ─────────────────────────────────────────────────────────────────
+function renderPredict() {
+  const rGames   = GAMES.filter(g => g.round === activeRound);
+  const upcoming = rGames.filter(g => g.status === 'upcoming');
+  const finished = rGames.filter(g => g.status === 'finished');
+  const isSubmitted = submitted[activeRound];
+  const filled = upcoming.filter(g => predictions[g.id] !== undefined).length;
+
+  let html = '<div class="pills">';
+  getRounds().forEach(r => {
+    html += `<button class="pill ${r===activeRound?'active':''}" onclick="setRound(${r})">מחזור ${r}</button>`;
+  });
+  html += '</div>';
+
+  if (upcoming.length > 0) {
+    html += '<div class="section-label">🏀 בחר מנצחת</div>';
+    upcoming.forEach(g => { html += renderGameCard(g, isSubmitted); });
+    if (!isSubmitted) {
+      const pct = upcoming.length ? (filled / upcoming.length * 100).toFixed(0) : 0;
+      html += `<div class="submit-area">
+        <div class="prog-row">
+          <div class="prog-label">${filled}/${upcoming.length} נבחרו</div>
+          <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+        </div>
+        <button class="submit-btn" onclick="submitPredictions()">שלח ניחושים 🎯</button>
+      </div>`;
+    } else {
+      html += `<div class="submitted-banner">✅ ניחושים נשלחו למחזור ${activeRound}!</div>`;
+    }
+  }
+
+  if (finished.length > 0) {
+    html += '<div class="section-label" style="margin-top:20px">✅ תוצאות</div>';
+    finished.forEach(g => { html += renderFinishedCard(g); });
+  }
+
+  if (!upcoming.length && !finished.length) html += '<div class="empty">אין משחקים למחזור זה</div>';
+  return html;
+}
+
+function renderGameCard(g, locked) {
+  const home = getTeam(g.home), away = getTeam(g.away);
+  const pick = predictions[g.id];
+  const winnerLabel = pick ? (pick==='home' ? `✓ ${home.short} מנצחת` : `✓ ${away.short} מנצחת`) : '';
+  return `
+    <div class="card ${pick!==undefined?'filled':''}">
+      <div class="card-meta" style="flex-direction:column;gap:4px">
+        <span class="round-tag">מחזור ${g.round}</span>
+        ${g.date && g.date !== 'undefined' ? `<span style="font-size:12px;color:#ffd700;font-weight:700">📅 ${formatGameDateTime(g)}</span>` : ''}
+      </div>
+      <div class="teams-pick-row">
+        <button class="team-pick-btn ${pick==='home'?'sel-home':''}" style="--tc:${home.color}"
+          ${locked?'disabled':''} onclick="pickWinner(${g.id},'home')">
+          ${pick==='home'?'<span class="check-badge">✓</span>':''}
+          <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[home.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${home.logo}'"></div>
+          <span class="team-name">${home.short}</span>
+          <span class="team-label">בית</span>
+        </button>
+        <div class="vs-col"><span class="vs-text">VS</span></div>
+        <button class="team-pick-btn ${pick==='away'?'sel-away':''}" style="--tc:${away.color}"
+          ${locked?'disabled':''} onclick="pickWinner(${g.id},'away')">
+          ${pick==='away'?'<span class="check-badge">✓</span>':''}
+          <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[away.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${away.logo}'"></div>
+          <span class="team-name">${away.short}</span>
+          <span class="team-label">חוץ</span>
+        </button>
+      </div>
+      ${pick!==undefined?`<div class="pred-tag">${winnerLabel}</div>`:''}
+    </div>`;
+}
+
+function renderFinishedCard(g) {
+  const home = getTeam(g.home), away = getTeam(g.away);
+  const pick = predictions[g.id];
+  const winner = g.hs > g.as ? 'home' : 'away';
+  let predHtml = '';
+  if (pick !== undefined) {
+    const ok = pick === winner;
+    predHtml = `<div class="pred-tag" style="color:${ok?'#22c55e':'#f87171'}">${ok?`✅ ניחשת נכון!`:`❌ ניחשת: ${pick==='home'?home.short:away.short}`}</div>`;
+  }
+  return `
+    <div class="card" style="opacity:0.9">
+      <div class="card-meta" style="flex-direction:column;gap:4px">
+        <span class="round-tag">מחזור ${g.round}</span>
+        ${g.date && g.date !== 'undefined' ? `<span style="font-size:12px;color:#ffd700;font-weight:700">📅 ${formatGameDateTime(g)}</span>` : ''}
+      </div>
+      <div class="teams-pick-row">
+        <div class="team-pick-btn" style="border-color:${winner==='home'?home.color+'88':'#ffffff10'}">
+          <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[home.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${home.logo}'"></div>
+          <span class="team-name">${home.short}</span>
+          <span style="font-size:22px;font-weight:900;color:#fff;margin-top:2px">${g.hs}</span>
+          ${winner==='home'?'<span class="winner-badge">🏆 ניצחה</span>':''}
+        </div>
+        <div class="vs-col"><span class="dash">—</span></div>
+        <div class="team-pick-btn" style="border-color:${winner==='away'?away.color+'88':'#ffffff10'}">
+          <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[away.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${away.logo}'"></div>
+          <span class="team-name">${away.short}</span>
+          <span style="font-size:22px;font-weight:900;color:#fff;margin-top:2px">${g.as}</span>
+          ${winner==='away'?'<span class="winner-badge">🏆 ניצחה</span>':''}
+        </div>
+      </div>
+      ${predHtml}
+    </div>`;
+}
+
+async function pickWinner(gameId, side) {
+  if (predictions[gameId] === side) delete predictions[gameId];
+  else predictions[gameId] = side;
+  const upcoming = GAMES.filter(x => x.round===activeRound && x.status==='upcoming');
+  const filled = upcoming.filter(x => predictions[x.id]!==undefined).length;
+  const pf = document.querySelector('.prog-fill'), pl = document.querySelector('.prog-label');
+  if (pf) pf.style.width = `${filled/upcoming.length*100}%`;
+  if (pl) pl.textContent = `${filled}/${upcoming.length} נבחרו`;
+  render();
+  await savePredictionsToFirebase();
+}
+
+async function submitPredictions() {
+  const upcoming = GAMES.filter(g => g.round===activeRound && g.status==='upcoming');
+  if (upcoming.filter(g => predictions[g.id]!==undefined).length < upcoming.length) {
+    showToast('⚠️ בחר מנצחת לכל המשחקים', '#f59e0b'); return;
+  }
+  submitted[activeRound] = true;
+  await savePredictionsToFirebase();
+  showToast('✅ הניחושים נשלחו! בהצלחה!');
+  render();
+}
+
+// ─── LIVE ────────────────────────────────────────────────────────────────────
+function renderLive() {
+  const live     = liveGames.filter(g => g.status === 'live');
+  const upcoming = liveGames.filter(g => g.status === 'upcoming');
+  const finished = GAMES.filter(g => g.status === 'finished');
+
+  const refreshTime = lastLiveRefresh
+    ? lastLiveRefresh.toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})
+    : '—';
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="section-label" style="margin-bottom:0"><span style="animation:blink 1.5s infinite;display:inline-block">🔴</span> תוצאות חיות</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="liveRefreshTime" style="font-size:10px;color:#ffffff33">עודכן ב-${refreshTime}</span>
+        <button onclick="manualRefresh(this)" style="background:#ffffff10;border:1px solid #ffffff20;border-radius:8px;color:#ffffff88;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit">↻ רענן</button>
+      </div>
+    </div>`;
+
+  if (!live.length && !upcoming.length && !finished.length) {
+    return html + '<div class="empty">🏀<br><br>אין משחקים להיום</div>';
+  }
+
+  if (live.length) {
+    live.forEach(g => {
+      const home = getTeam(g.home), away = getTeam(g.away);
+      html += `
+        <div class="card" style="border-color:#ff450055;box-shadow:0 0 24px #ff450020">
+          <div class="card-meta" style="justify-content:space-between">
+            <span class="live-chip">🔴 חי</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+              <span style="color:#ffd700aa;font-size:13px;font-weight:700">${g.q ? g.q : ''} ${g.clk ? '· '+g.clk : ''}</span>
+              <span style="font-size:10px;color:#ffffff44">${formatGameDateTime(g)}</span>
+            </div>
+          </div>
+          <div class="teams-pick-row">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[home.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${home.logo}'"></div>
+              <span class="team-name">${home.short}</span>
+            </div>
+            <div class="live-score-box">
+              <span class="live-num" id="live-hs-${g.id}">${g.hs}</span>
+              <span class="dash">—</span>
+              <span class="live-num" id="live-as-${g.id}">${g.as}</span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[away.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${away.logo}'"></div>
+              <span class="team-name">${away.short}</span>
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
+  if (upcoming.filter(g => {
+    if (!g.date) return false;
+    const d = new Date(g.date);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayEnd = new Date(today); todayEnd.setHours(23,59,59,999);
+    return d >= today && d <= todayEnd;
+  }).length) {
+    html += '<div class="section-label" style="margin-top:16px">⏳ ממתינים להיום</div>';
+    upcoming.forEach(g => {
+      if (!g.date) return;
+      const d = new Date(g.date);
+      const today = new Date(); today.setHours(0,0,0,0);
+      const todayEnd = new Date(today); todayEnd.setHours(23,59,59,999);
+      if (d < today || d > todayEnd) return;
+      const home = getTeam(g.home), away = getTeam(g.away);
+      html += `
+        <div class="card">
+          <div class="teams-pick-row">
+            <div style="flex:1;text-align:center">
+              <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88;overflow:hidden;padding:2px;margin:0 auto"><img src="${TEAM_LOGOS[home.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${home.logo}'"></div>
+              <div class="team-name" style="margin-top:4px">${home.short}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <span style="font-size:13px;color:#ffffff33;font-weight:700">VS</span>
+              <span style="font-size:11px;color:#ffd700aa">${formatGameDateTime(g)}</span>
+            </div>
+            <div style="flex:1;text-align:center">
+              <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88;overflow:hidden;padding:2px;margin:0 auto"><img src="${TEAM_LOGOS[away.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${away.logo}'"></div>
+              <div class="team-name" style="margin-top:4px">${away.short}</div>
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
+  if (finished.length) {
+    html += '<div class="section-label" style="margin-top:16px">✅ תוצאות סופיות</div>';
+    [...finished].reverse().forEach(g => {
+      const home = getTeam(g.home), away = getTeam(g.away);
+      const winnerHome = g.hs > g.as;
+      html += `
+        <div class="card" style="border-color:#22c55e33">
+          ${g.date && g.date !== 'undefined' ? `<div style="text-align:center;font-size:12px;color:#ffd700;font-weight:700;margin-bottom:8px">📅 ${formatGameDateTime(g)}</div>` : ''}
+          <div class="teams-pick-row">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:${winnerHome?1:0.5}">
+              <div class="team-badge" style="background:${home.color}22;border-color:${home.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[home.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${home.logo}'"></div>
+              <div class="team-name">${home.short}</div>
+              ${winnerHome?'<div class="winner-badge">🏆 מנצחת</div>':''}
+            </div>
+            <div class="live-score-box">
+              <span class="live-num" style="color:${winnerHome?'#22c55e':'#ffffffcc'}">${g.hs}</span>
+              <span class="dash">—</span>
+              <span class="live-num" style="color:${!winnerHome?'#22c55e':'#ffffffcc'}">${g.as}</span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:${!winnerHome?1:0.5}">
+              <div class="team-badge" style="background:${away.color}22;border-color:${away.color}88;overflow:hidden;padding:2px"><img src="${TEAM_LOGOS[away.id]||''}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none';this.parentNode.textContent='${away.logo}'"></div>
+              <div class="team-name">${away.short}</div>
+              ${!winnerHome?'<div class="winner-badge">🏆 מנצחת</div>':''}
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
+  return html;
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const finishedGames = GAMES.filter(g => g.status === 'finished');
+  const rounds = [...new Set(finishedGames.map(g => g.round))].sort((a,b) => b-a);
+
+  // סטטיסטיקה מצטברת
+  let totalCorrect = 0, totalGames = finishedGames.length;
+  finishedGames.forEach(g => {
+    const pick = predictions[g.id];
+    if (!pick) return;
+    if (pick === (g.hs > g.as ? 'home' : 'away')) totalCorrect++;
+  });
+  const totalPts = totalCorrect * 3;
+  const pct = totalGames ? Math.round(totalCorrect / totalGames * 100) : 0;
+
+  let html = `
+    <div class="stats-row">
+      <div class="stat-box" style="border-color:#ffd70044"><span style="font-size:22px">🏅</span><div class="stat-val" style="color:#ffd700">${totalPts}</div><div class="stat-label">סה״כ נקודות</div></div>
+      <div class="stat-box" style="border-color:#22c55e44"><span style="font-size:22px">🎯</span><div class="stat-val" style="color:#22c55e">${pct}%</div><div class="stat-label">אחוז הצלחה</div></div>
+      <div class="stat-box" style="border-color:#3b82f644"><span style="font-size:22px">✅</span><div class="stat-val" style="color:#3b82f6">${totalCorrect}/${totalGames}</div><div class="stat-label">ניחושים נכונים</div></div>
+    </div>`;
+
+  if (!rounds.length) {
+    html += '<div class="empty">אין תוצאות עדיין</div>';
+    return html;
+  }
+
+  rounds.forEach(round => {
+    const rGames = finishedGames.filter(g => g.round === round);
+    let roundCorrect = 0, roundPicked = 0;
+    rGames.forEach(g => {
+      const pick = predictions[g.id];
+      if (!pick) return;
+      roundPicked++;
+      if (pick === (g.hs > g.as ? 'home' : 'away')) roundCorrect++;
+    });
+    const roundPts = roundCorrect * 3;
+    const roundPct = roundPicked ? Math.round(roundCorrect / roundPicked * 100) : 0;
+
+    html += `
+      <div style="background:linear-gradient(135deg,#13132a,#0f0f22);border-radius:16px;border:1px solid #ffffff12;margin-bottom:14px;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #ffffff08">
+          <div>
+            <div style="font-size:15px;font-weight:800">מחזור ${round}</div>
+            <div style="font-size:11px;color:#ffffff44;margin-top:2px">${roundCorrect}/${rGames.length} נכונים · ${roundPct}% הצלחה</div>
+          </div>
+          <div style="text-align:left">
+            <div style="font-size:20px;font-weight:900;color:${roundPts>0?'#ffd700':'#ffffff44'}">${roundPts}</div>
+            <div style="font-size:10px;color:#ffffff44;font-weight:600">נקודות</div>
+          </div>
+        </div>
+        <div style="padding:10px 12px">`;
+
+    rGames.forEach(g => {
+      const home = getTeam(g.home), away = getTeam(g.away);
+      const pick = predictions[g.id];
+      const winner = g.hs > g.as ? 'home' : 'away';
+      const ok = pick && pick === winner;
+      const wrong = pick && pick !== winner;
+      html += `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #ffffff06">
+          <span style="color:#ffffffbb;font-size:12px">${home.short} <span style="color:#ffffff33">${g.hs}–${g.as}</span> ${away.short}</span>
+          <span style="font-size:12px;font-weight:700;color:${ok?'#22c55e':wrong?'#f87171':'#ffffff33'}">
+            ${pick ? (ok?'✅ ':wrong?'❌ ':'') + (pick==='home'?home.short:away.short) : '—'}
+          </span>
+        </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  return html;
+}
+
+// ─── LEADERS ─────────────────────────────────────────────────────────────────
+function renderLeaders() {
+  const medals = ['🥇','🥈','🥉'];
+  let html = '<div class="section-label">🏆 לוח מובילים</div>';
+
+  if (leaderboard.length === 0) {
+    html += '<div class="loading-spinner"><div class="spinner"></div>טוען...</div>';
+  } else {
+    const finishedCount = GAMES.filter(g => g.status === 'finished').length;
+
+    // מיון: קודם לפי נקודות, שוויון — לפי אחוז הצלחה
+    const sorted = [...leaderboard].sort((a, b) => {
+      const ptsDiff = (b.points||0) - (a.points||0);
+      if (ptsDiff !== 0) return ptsDiff;
+      const aPct = (a.correct||0) / Math.max(a.totalPicked||a.correct||1, 1);
+      const bPct = (b.correct||0) / Math.max(b.totalPicked||b.correct||1, 1);
+      return bPct - aPct;
+    });
+
+    sorted.forEach((u, i) => {
+      const isMe = currentUser && u.id === currentUser.id;
+      const rank = i < 3 ? medals[i] : `#${i+1}`;
+      const pc = i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':isMe?'#3b82f6':'#ffffffcc';
+      const pct = finishedCount ? Math.round((u.correct||0) / finishedCount * 100) : 0;
+      const barColor = pct>=70?'#22c55e':pct>=40?'#ffd700':'#f87171';
+
+      html += `
+        <div class="leader-row ${isMe?'me':''}" onclick="openUserModal('${u.id}')" style="cursor:pointer;flex-direction:column;align-items:stretch;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="leader-rank">${rank}</div>
+            <div class="leader-avatar">${u.avatar || '🏀'}</div>
+            <div class="leader-info">
+              <div class="leader-name">${u.name}${isMe?' (אני)':''}</div>
+              <div class="leader-sub">${u.correct||0}/${finishedCount} נכונים · ${pct}% הצלחה</div>
+            </div>
+            <div class="leader-pts-val" style="color:${pc}">${u.points||0}<span class="leader-pts-lbl">נק'</span></div>
+          </div>
+          <div style="height:4px;background:#ffffff10;border-radius:4px;overflow:hidden;margin:0 4px">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width 0.6s ease"></div>
+          </div>
+        </div>`;
+    });
+  }
+
+  html += `<div class="invite-box">
+    <div class="invite-title">📨 הזמן חברים</div>
+    <div class="invite-sub">שתף את הקישור ותתחרה עם חברים!</div>
+    <button class="invite-btn" onclick="copyLink()">📋 העתק קישור</button>
+  </div>`;
+  return html;
+}
+
+function openUserModal(userId) {
+  const u = leaderboard.find(x => x.id === userId);
+  if (!u) return;
+  const preds = u.predictions || {};
+  const isMe = currentUser && u.id === currentUser.id;
+  const medals = ['🥇','🥈','🥉'];
+  const rank = leaderboard.indexOf(u);
+  const rankLabel = rank < 3 ? medals[rank] : `#${rank+1}`;
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div style="font-size:42px">${u.avatar || '🏀'}</div>
+      <div>
+        <div style="font-size:18px;font-weight:800">${u.name}${isMe?' (אני)':''}</div>
+        <div style="font-size:13px;color:#ffffff66;margin-top:3px">${rankLabel} · ${u.points || 0} נקודות · ${u.correct || 0} נכונים</div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-bottom:12px">🎯 ניחושים — מחזור 26</div>`;
+
+  const upcomingGames = GAMES.filter(g => g.round === 26 && g.status === 'upcoming');
+  const finishedGames = GAMES.filter(g => g.round === 26 && g.status === 'finished');
+  const allGames = [...finishedGames, ...upcomingGames];
+
+  if (allGames.length === 0) {
+    html += '<div style="text-align:center;color:#ffffff33;padding:20px">אין משחקים</div>';
+  } else {
+    allGames.forEach(g => {
+      const home = getTeam(g.home), away = getTeam(g.away);
+      const pick = preds[g.id];
+      const isFinished = g.status === 'finished';
+      const winner = isFinished ? (g.hs > g.as ? 'home' : 'away') : null;
+      const ok = pick && isFinished && pick === winner;
+      const wrong = pick && isFinished && pick !== winner;
+
+      let pickColor = '#ffffff33';
+      let pickIcon = '—';
+      if (pick === 'home') pickIcon = home.short;
+      else if (pick === 'away') pickIcon = away.short;
+
+      if (ok) pickColor = '#22c55e';
+      else if (wrong) pickColor = '#f87171';
+      else if (pick) pickColor = '#ffd700aa';
+
+      const resultStr = isFinished ? `${g.hs}–${g.as}` : '';
+
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;border:1px solid ${ok?'#22c55e33':wrong?'#f8717133':'#ffffff10'};background:#ffffff05;margin-bottom:8px">
+        <span style="color:#ffffffcc;font-size:13px">${home.short} נגד ${away.short}${resultStr?' · '+resultStr:''}</span>
+        <span style="color:${pickColor};font-size:13px;font-weight:700">
+          ${pick ? (ok?'✅ ':wrong?'❌ ':'🎯 ')+pickIcon : '—'}
+        </span>
+      </div>`;
+    });
+  }
+
+  document.getElementById('userModalContent').innerHTML = html;
+  const modal = document.getElementById('userModal');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => { modal.style.opacity = '1'; });
+}
+
+function closeUserModal(e) {
+  if (e && e.target !== document.getElementById('userModal')) return;
+  document.getElementById('userModal').style.display = 'none';
+}
+
+function copyLink() {
+  if (navigator.clipboard) navigator.clipboard.writeText(window.location.href);
+  showToast('📋 הקישור הועתק!', '#3b82f6');
+}
+
+// ─── ADMIN ────────────────────────────────────────────────────────────────────
+let adminHoldTimer = null;
+let adminTab = 'results'; // 'results' | 'new-round'
+
+function startAdminHold() {
+  adminHoldTimer = setTimeout(() => {
+    adminHoldTimer = null;
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwError').style.display = 'none';
+    document.getElementById('pwModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('pwInput').focus(), 100);
+  }, 1500);
+}
+
+function cancelAdminHold() {
+  if (adminHoldTimer) { clearTimeout(adminHoldTimer); adminHoldTimer = null; }
+}
+
+function checkAdminPw() {
+  const pw = document.getElementById('pwInput').value;
+  if (pw === '1971') {
+    document.getElementById('pwModal').style.display = 'none';
+    adminTab = 'results';
+    openAdminModal();
+  } else {
+    document.getElementById('pwError').style.display = 'block';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+  }
+}
+
+function openAdminModal() {
+  renderAdminContent();
+  document.getElementById('adminModal').style.display = 'flex';
+}
+
+function closeAdminModal(e) {
+  if (e && e.target !== document.getElementById('adminModal')) return;
+  document.getElementById('adminModal').style.display = 'none';
+}
+
+function setAdminTab(tab) {
+  adminTab = tab;
+  renderAdminContent();
+}
+
+function renderAdminContent() {
+  const tabStyle = (t) => adminTab===t
+    ? 'flex:1;padding:9px 0;border-radius:10px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit'
+    : 'flex:1;padding:9px 0;border-radius:10px;border:1px solid #ffffff15;background:transparent;color:#ffffff55;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
+
+  let html = `
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+      <button style="${tabStyle('results')}" onclick="setAdminTab('results')">📋 תוצאות</button>
+      <button style="${tabStyle('api-import')}" onclick="setAdminTab('api-import')">🌐 יבוא מ-API</button>
+      <button style="${tabStyle('new-round')}" onclick="setAdminTab('new-round')">➕ מחזור חדש</button>
+      <button style="${tabStyle('update-dates')}" onclick="setAdminTab('update-dates')">📅 עדכן תאריכים</button>
+      <button style="${tabStyle('unlock')}" onclick="setAdminTab('unlock')">🔓 פתיחה מחדש</button>
+      <button style="${tabStyle('reset')}" onclick="setAdminTab('reset')">🗑️ איפוס</button>
+    </div>`;
+
+  if (adminTab === 'results') {
+    html += renderAdminResults();
+  } else if (adminTab === 'api-import') {
+    html += renderAdminApiImport();
+  } else if (adminTab === 'new-round') {
+    html += renderAdminNewRound();
+  } else if (adminTab === 'update-dates') {
+    html += renderAdminUpdateDates();
+  } else if (adminTab === 'unlock') {
+    html += renderAdminUnlock();
+  } else if (adminTab === 'reset') {
+    html += renderAdminReset();
+  }
+
+  document.getElementById('adminContent').innerHTML = html;
+
+  if (adminTab === 'new-round') initNewRoundForm();
+}
+
+// ── יבוא מ-API ──
+// מיפוי שמות קבוצות מ-TheSportsDB לקבוצות באפליקציה
+const TEAM_NAME_MAP = {
+  // מכבי תל אביב - id 1
+  'maccabi tel aviv': 1, 'מכבי תל אביב': 1, 'maccabi t/a': 1, 'maccabi tel aviv bc': 1,
+  // הפועל תל אביב - id 2
+  'hapoel tel aviv': 2, 'הפועל תל אביב': 2, 'hapoel tel aviv bc': 2,
+  // הפועל ירושלים - id 3
+  'hapoel jerusalem': 3, 'הפועל ירושלים': 3, 'hapoel jerusalem bc': 3,
+  // חולון - id 4
+  'holon': 4, 'ironi holon': 4, 'עירוני חולון': 4, 'hapoel holon': 4, 'hapoel holon bc': 4,
+  // נס ציונה - id 5
+  'nes ziona': 5, 'נס ציונה': 5, 'maccabi nes ziona': 5, 'ironi ness ziona': 5, 'ironi ness ziona bc': 5,
+  // נתניה - id 6
+  'netanya': 6, 'maccabi netanya': 6, 'נתניה': 6, 'elitzur netanya': 6, 'elitzur netanya b.c.': 6, 'elitzur netanya bc': 6,
+  // מכבי רמת גן - id 7
+  'maccabi ramat gan': 7, 'maccabi ironi ramat gan': 7, 'מכבי רמת גן': 7,
+  // הרצליה - id 9
+  'herzliya': 9, 'עירוני הרצליה': 9, 'ironi herzliya': 9, 'bnei herzliya': 9, 'bnei herzliya bc': 9,
+  // גליל עליון - id 10
+  'galil elyon': 10, 'גליל עליון': 10, 'hapoel galil elyon': 10, 'hapoel galil elyon bc': 10,
+  // קריית אתא - id 11
+  'ironi kiryat ata': 11, 'קריית אתא': 11, 'ironi kiryat ata b.c.': 11, 'ironi kiryat ata bc': 11,
+  // באר שבע - id 12
+  'maccabi be\'er sheva': 12, 'מכבי באר שבע': 12, 'beer sheva': 12, 'hapoel beer sheva': 12, 'hapoel beer sheva bc': 12, 'hapoel be\'er sheva bc': 12,
+  // הפועל העמק - id 13
+  'hapoel haemek': 13, 'הפועל העמק': 13, 'hapoel ha\'emek': 13, 'hapoel haemek bc': 13,
+  // מכבי רעננה - id 14
+  'maccabi raanana': 14, 'מכבי רעננה': 14, 'raanana': 14, 'maccabi ra\'anana': 14,
+  // מכבי ראשון לציון - id 15
+  'maccabi rishon lezion': 15, 'מכבי ראשון לציון': 15, 'maccabi rishon le-zion': 15, 'rishon lezion': 15,
+  'rishon le-zion': 15, 'maccabi rishon': 15, 'מכבי ראשל"צ': 15, 'maccabi rishon lezion bc': 15,
+};
+
+function matchTeamName(name) {
+  if (!name) return null;
+  const lower = name.toLowerCase().trim();
+  for (const [key, id] of Object.entries(TEAM_NAME_MAP)) {
+    if (lower.includes(key) || key.includes(lower)) return id;
+  }
+  return null;
+}
+
+let apiImportPreview = []; // משחקים שנשלפו מה-API לתצוגה מקדימה
+let apiImportRoundNum = null;
+
+function renderAdminApiImport() {
+  const nextRound = GAMES.length ? Math.max(...GAMES.map(g => g.round)) + 1 : 1;
+  return `
+    <div style="font-size:13px;color:#ffffff66;line-height:1.6;margin-bottom:16px">
+      שליפת משחקי ליגת העל לשבוע הקרוב מ-TheSportsDB ובניית לוח משחקים אוטומטי.
+    </div>
+
+    <div style="background:#13132a;border-radius:14px;border:1px solid #ffffff12;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#ffffff66;margin-bottom:8px">מספר מחזור</div>
+      <input id="apiRoundNum" type="number" min="1" max="99" value="${nextRound}"
+        style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #ffffff20;background:#ffffff08;color:#fff;font-size:18px;font-weight:900;text-align:center;font-family:inherit;outline:none"
+        onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
+    </div>
+
+    <button onclick="fetchApiGames()"
+      style="width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;margin-bottom:14px;box-shadow:0 4px 20px #3b82f644">
+      🌐 שלוף משחקי השבוע הקרוב
+    </button>
+
+    <div id="apiImportResult"></div>
+  `;
+}
+
+async function fetchApiGames() {
+  const resultEl = document.getElementById('apiImportResult');
+  const roundInput = document.getElementById('apiRoundNum');
+  apiImportRoundNum = parseInt(roundInput?.value) || (GAMES.length ? Math.max(...GAMES.map(g=>g.round))+1 : 1);
+
+  resultEl.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px;color:#ffffff55;font-size:13px">
+      <div class="spinner"></div>
+      <span>שולף משחקים מ-TheSportsDB...</span>
+    </div>`;
+
+  try {
+    const leagueId = '4474';
+    const season = '2025-2026';
+
+    // שלב 1: שולפים את 15 המשחקים האחרונים כדי לגלות את מספר הסיבוב הנוכחי
+    const seasonUrl = `https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=${leagueId}&s=${season}`;
+    const seasonResp = await fetch(seasonUrl);
+    const seasonData = await seasonResp.json();
+
+    let targetRound = apiImportRoundNum;
+    if (seasonData.events && seasonData.events.length) {
+      const maxRound = Math.max(...seasonData.events.map(ev => parseInt(ev.intRound) || 0));
+      if (maxRound > 0) targetRound = maxRound;
+    }
+
+    // שלב 2: שולפים את כל משחקי הסיבוב הנמצא
+    const url = `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${leagueId}&r=${targetRound}&s=${season}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (!data.events || !data.events.length) {
+      resultEl.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">לא נמצאו משחקים במחזור ${targetRound}</div>`;
+      return;
+    }
+
+    const weekGames = data.events;
+
+    if (!weekGames.length) {
+      resultEl.innerHTML = `<div style="text-align:center;color:#f59e0b;padding:24px;line-height:1.8">⚠️ אין משחקים במחזור ${targetRound}<br><span style="font-size:11px;color:#ffffff33">בדוק שמספר הסיבוב נכון</span></div>`;
+      return;
+    }
+
+    // עדכון שדה מספר הסיבוב בממשק
+    const roundInput = document.getElementById('apiRoundNum');
+    if (roundInput) roundInput.value = targetRound;
+    apiImportRoundNum = targetRound;
+
+    // התאמת קבוצות
+    apiImportPreview = weekGames.map(ev => {
+      const homeId = matchTeamName(ev.strHomeTeam);
+      const awayId = matchTeamName(ev.strAwayTeam);
+      return {
+        homeRaw: ev.strHomeTeam,
+        awayRaw: ev.strAwayTeam,
+        homeId,
+        awayId,
+        date: ev.dateEvent,
+        time: ev.strTime || '',
+        matched: !!(homeId && awayId),
+      };
+    });
+
+    renderApiPreview(resultEl);
+
+  } catch(err) {
+    console.error(err);
+    resultEl.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">שגיאה בשליפה: ${err.message}</div>`;
+  }
+}
+
+function renderApiPreview(container) {
+  const matched   = apiImportPreview.filter(g => g.matched);
+  const unmatched = apiImportPreview.filter(g => !g.matched);
+
+  let html = `
+    <div style="font-size:12px;font-weight:700;color:#ffd700aa;letter-spacing:1px;margin-bottom:10px">
+      נמצאו ${apiImportPreview.length} משחקים · ${matched.length} זוהו · ${unmatched.length} לא זוהו
+    </div>`;
+
+  apiImportPreview.forEach((g, i) => {
+    const home = g.homeId ? getTeam(g.homeId) : null;
+    const away = g.awayId ? getTeam(g.awayId) : null;
+    const ok   = g.matched;
+    const teamOptions = TEAMS.map(t => `<option value="${t.id}">${t.short}</option>`).join('');
+
+    html += `
+      <div style="background:#13132a;border-radius:14px;border:1px solid ${ok?'#22c55e33':'#f8717133'};padding:13px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;color:${ok?'#22c55e':'#f87171'};font-weight:700">${ok?'✅ זוהה':'⚠️ לא זוהה — בחר ידנית'}</span>
+          <span style="font-size:10px;color:#ffffff33">${g.date}${g.time?' '+g.time:''}</span>
+        </div>
+        <div style="font-size:11px;color:#ffffff44;margin-bottom:8px;text-align:center">${g.homeRaw} vs ${g.awayRaw}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="api-home-${i}" onchange="updateApiGame(${i},'homeId',this.value)"
+            style="flex:1;padding:7px 6px;border-radius:10px;border:1px solid ${ok?'#22c55e44':'#f8717144'};background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none">
+            <option value="">-- בית --</option>${teamOptions}
+          </select>
+          <span style="color:#ffffff33;font-size:12px;font-weight:900;flex-shrink:0">VS</span>
+          <select id="api-away-${i}" onchange="updateApiGame(${i},'awayId',this.value)"
+            style="flex:1;padding:7px 6px;border-radius:10px;border:1px solid ${ok?'#22c55e44':'#f8717144'};background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none">
+            <option value="">-- אורח --</option>${teamOptions}
+          </select>
+        </div>
+      </div>`;
+  });
+
+  const allOk = apiImportPreview.every(g => g.homeId && g.awayId);
+  html += `
+    <button onclick="saveApiImport()" ${allOk?'':'disabled'}
+      style="width:100%;padding:14px;border-radius:14px;border:none;background:${allOk?'linear-gradient(135deg,#ff4500,#ffd700)':'#333'};color:${allOk?'#000':'#ffffff33'};font-size:15px;font-weight:900;cursor:${allOk?'pointer':'not-allowed'};font-family:inherit;margin-top:4px">
+      🚀 צור מחזור ${apiImportRoundNum} (${apiImportPreview.length} משחקים)
+    </button>
+    ${!allOk?`<div style="text-align:center;font-size:11px;color:#f59e0b;margin-top:8px">השלם את הקבוצות הלא מזוהות כדי להמשיך</div>`:''}`;
+
+  container.innerHTML = html;
+
+  // Set selected values
+  apiImportPreview.forEach((g, i) => {
+    const hs = document.getElementById(`api-home-${i}`);
+    const as = document.getElementById(`api-away-${i}`);
+    if (hs && g.homeId) hs.value = g.homeId;
+    if (as && g.awayId) as.value = g.awayId;
+  });
+}
+
+function updateApiGame(idx, field, val) {
+  apiImportPreview[idx][field] = val ? parseInt(val) : null;
+  apiImportPreview[idx].matched = !!(apiImportPreview[idx].homeId && apiImportPreview[idx].awayId);
+  renderApiPreview(document.getElementById('apiImportResult'));
+}
+
+async function saveApiImport() {
+  if (!window._db) return;
+  const valid = apiImportPreview.filter(g => g.homeId && g.awayId);
+  if (!valid.length) { showToast('⚠️ אין משחקים תקינים לשמירה', '#f59e0b'); return; }
+
+  const maxId = GAMES.length ? Math.max(...GAMES.map(g => g.id)) : 0;
+  try {
+    const saves = valid.map((g, i) => {
+      const gameId = maxId + i + 1;
+      return window._fsSetDoc(window._fsDoc(window._db, 'games', String(gameId)), {
+        id: gameId, home: g.homeId, away: g.awayId,
+        round: apiImportRoundNum, status: 'upcoming',
+        hs: 0, as: 0,
+        date: g.date || '',
+        time: g.time || '',
+        updatedAt: Date.now()
+      });
+    });
+    await Promise.all(saves);
+    showToast(`✅ מחזור ${apiImportRoundNum} נוצר עם ${valid.length} משחקים!`, '#22c55e');
+    adminTab = 'results';
+    renderAdminContent();
+  } catch(e) {
+    console.error(e);
+    showToast('שגיאה בשמירה', '#f87171');
+  }
+}
+
+// ── עדכון תאריכים ──
+function renderAdminUpdateDates() {
+  const noDate = GAMES.filter(g => !g.date);
+  return `
+    <div style="font-size:13px;color:#ffffff66;line-height:1.6;margin-bottom:16px">
+      שליפת תאריכי משחקים מ-TheSportsDB ועדכון ב-Firebase למשחקים שחסר להם תאריך.
+    </div>
+    <div style="background:#13132a;border-radius:14px;border:1px solid #ffffff12;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;color:#ffffffbb">משחקים ללא תאריך: <span style="color:#f59e0b;font-weight:900">${noDate.length}</span></div>
+      <div style="font-size:11px;color:#ffffff44;margin-top:4px">מתוך סה"כ ${GAMES.length} משחקים ב-Firebase</div>
+    </div>
+    <button onclick="updateAllDates(this)"
+      style="width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;margin-bottom:14px;box-shadow:0 4px 20px #22c55e33">
+      📅 שלוף ועדכן תאריכים
+    </button>
+    <div id="updateDatesResult"></div>
+  `;
+}
+
+async function updateAllDates(btn) {
+  const resultEl = document.getElementById('updateDatesResult');
+  btn.disabled = true;
+  btn.textContent = '⏳ שולף...';
+
+  const leagueId = '4474';
+  const season = '2025-2026';
+
+  try {
+    // שולפים את כל הסיבובים הקיימים במשחקים
+    const rounds = [...new Set(GAMES.map(g => g.round))];
+
+    resultEl.innerHTML = `<div style="text-align:center;color:#ffffff55;font-size:13px;padding:12px">שולף ${rounds.length} סיבובים (${Math.min(...rounds)}–${Math.max(...rounds)})...</div>`;
+
+    // שליפה מקבילה של כל הסיבובים
+    const fetches = rounds.map(r =>
+      fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${leagueId}&r=${r}&s=${season}`)
+        .then(res => res.json())
+        .catch(() => ({ events: [] }))
+    );
+    const results = await Promise.all(fetches);
+    const allEvents = results.flatMap(r => r.events || []);
+
+    let updated = 0, notFound = 0;
+    const saves = [];
+
+    GAMES.forEach(game => {
+      const hasDate = game.date && game.date !== 'undefined' && game.date !== '';
+      if (hasDate) return;
+      const ev = allEvents.find(e => {
+        const homeId = matchTeamName(e.strHomeTeam);
+        const awayId = matchTeamName(e.strAwayTeam);
+        return homeId === game.home && awayId === game.away;
+      });
+      if (!ev) { notFound++; return; }
+      updated++;
+      saves.push(
+        window._fsSetDoc(window._fsDoc(window._db, 'games', String(game.id)), {
+          ...game,
+          date: ev.dateEvent || '',
+          time: ev.strTime || '',
+          updatedAt: Date.now()
+        })
+      );
+    });
+
+    await Promise.all(saves);
+
+    resultEl.innerHTML = `
+      <div style="background:#22c55e18;border:1px solid #22c55e44;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:16px;font-weight:900;color:#22c55e;margin-bottom:4px">✅ עודכנו ${updated} משחקים</div>
+        ${notFound ? `<div style="font-size:12px;color:#f59e0b">${notFound} משחקים לא נמצאו ב-API</div>` : ''}
+      </div>`;
+    showToast(`✅ עודכנו ${updated} משחקים עם תאריכים!`, '#22c55e');
+    btn.textContent = '📅 שלוף ועדכן תאריכים';
+    btn.disabled = false;
+
+  } catch(err) {
+    console.error(err);
+    resultEl.innerHTML = `<div style="text-align:center;color:#f87171;padding:16px">שגיאה: ${err.message}</div>`;
+    btn.textContent = '📅 שלוף ועדכן תאריכים';
+    btn.disabled = false;
+  }
+}
+
+
+function renderAdminResults() {
+  if (!GAMES.length) return '<div style="text-align:center;color:#ffffff33;padding:30px">אין משחקים עדיין.<br>הוסף מחזור חדש תחילה.</div>';
+  const rounds = getRounds();
+  let html = '';
+  rounds.slice().reverse().forEach(round => {
+    const rGames = GAMES.filter(g => g.round === round);
+    html += `<div style="font-size:12px;font-weight:700;color:#ffd700aa;letter-spacing:1px;margin-bottom:10px;margin-top:${round===rounds[rounds.length-1]?0:20}px">מחזור ${round}</div>`;
+    rGames.forEach(g => {
+      const home = getTeam(g.home), away = getTeam(g.away);
+      const isFinished = g.status === 'finished';
+      html += `
+        <div style="background:#13132a;border-radius:14px;border:1px solid ${isFinished?'#22c55e33':'#ffffff12'};padding:14px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:${isFinished?'#22c55e':'#ffffff44'};margin-bottom:10px">${isFinished?'✅ הסתיים':'⏳ טרם הוזן'}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#ffffffcc">${home.short}</div>
+            <input id="hs-${g.id}" type="number" min="0" max="200" placeholder="0" value="${isFinished?g.hs:''}"
+              style="width:56px;padding:8px 4px;border-radius:10px;border:1px solid #ffffff20;background:#ffffff08;color:#fff;font-size:18px;font-weight:900;text-align:center;font-family:inherit;outline:none"
+              onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
+            <span style="color:#ffffff33;font-weight:900">—</span>
+            <input id="as-${g.id}" type="number" min="0" max="200" placeholder="0" value="${isFinished?g.as:''}"
+              style="width:56px;padding:8px 4px;border-radius:10px;border:1px solid #ffffff20;background:#ffffff08;color:#fff;font-size:18px;font-weight:900;text-align:center;font-family:inherit;outline:none"
+              onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
+            <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#ffffffcc">${away.short}</div>
+          </div>
+          <button onclick="saveGameResult(${g.id})"
+            style="width:100%;margin-top:10px;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit">
+            💾 שמור תוצאה
+          </button>
+        </div>`;
+    });
+  });
+  return html;
+}
+
+// ── מחזור חדש ──
+let newRoundGames = []; // [{ home: id, away: id }]
+
+function renderAdminNewRound() {
+  const nextRound = GAMES.length ? Math.max(...GAMES.map(g=>g.round)) + 1 : 1;
+  return `
+    <div style="background:#13132a;border-radius:14px;border:1px solid #ffffff12;padding:16px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;color:#ffffffcc;margin-bottom:10px">מספר מחזור</div>
+      <input id="newRoundNum" type="number" min="1" max="99" value="${nextRound}"
+        style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #ffffff20;background:#ffffff08;color:#fff;font-size:18px;font-weight:900;text-align:center;font-family:inherit;outline:none"
+        onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
+    </div>
+    <div id="newRoundGamesList"></div>
+    <button onclick="addNewRoundGame()"
+      style="width:100%;padding:11px;border-radius:12px;border:2px dashed #ffffff20;background:transparent;color:#ffffff55;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px">
+      ➕ הוסף משחק
+    </button>
+    <button onclick="saveNewRound()"
+      style="width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">
+      🚀 צור מחזור
+    </button>`;
+}
+
+function initNewRoundForm() {
+  newRoundGames = [];
+  renderNewRoundGames();
+}
+
+function addNewRoundGame() {
+  newRoundGames.push({ home: 1, away: 2 });
+  renderNewRoundGames();
+}
+
+function removeNewRoundGame(idx) {
+  newRoundGames.splice(idx, 1);
+  renderNewRoundGames();
+}
+
+function renderNewRoundGames() {
+  const teamOptions = TEAMS.map(t => `<option value="${t.id}">${t.short}</option>`).join('');
+  const container = document.getElementById('newRoundGamesList');
+  if (!container) return;
+  if (!newRoundGames.length) {
+    container.innerHTML = '<div style="text-align:center;color:#ffffff33;font-size:13px;padding:16px 0;margin-bottom:12px">לחץ ➕ להוספת משחק</div>';
+    return;
+  }
+  container.innerHTML = newRoundGames.map((g, i) => `
+    <div style="background:#13132a;border-radius:14px;border:1px solid #ffffff12;padding:12px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:12px;font-weight:700;color:#ffffff66">משחק ${i+1}</span>
+        <button onclick="removeNewRoundGame(${i})" style="background:none;border:none;color:#f87171;font-size:16px;cursor:pointer;padding:0">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <select id="ng-home-${i}" onchange="updateNewGame(${i},'home',this.value)"
+          style="flex:1;padding:8px 6px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none">
+          ${teamOptions}
+        </select>
+        <span style="color:#ffffff33;font-size:12px;font-weight:900;flex-shrink:0">VS</span>
+        <select id="ng-away-${i}" onchange="updateNewGame(${i},'away',this.value)"
+          style="flex:1;padding:8px 6px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:12px;font-family:inherit;outline:none">
+          ${teamOptions}
+        </select>
+      </div>
+    </div>`).join('');
+
+  // Set selected values
+  newRoundGames.forEach((g, i) => {
+    const hs = document.getElementById(`ng-home-${i}`);
+    const as = document.getElementById(`ng-away-${i}`);
+    if (hs) hs.value = g.home;
+    if (as) as.value = g.away;
+  });
+}
+
+function updateNewGame(idx, side, val) {
+  newRoundGames[idx][side] = parseInt(val);
+}
+
+async function saveNewRound() {
+  if (!window._db) return;
+  const roundNum = parseInt(document.getElementById('newRoundNum').value);
+  if (!roundNum || roundNum < 1) { showToast('⚠️ מספר מחזור לא תקין', '#f59e0b'); return; }
+  if (!newRoundGames.length) { showToast('⚠️ הוסף לפחות משחק אחד', '#f59e0b'); return; }
+
+  // בדיקת כפילויות
+  for (const g of newRoundGames) {
+    if (g.home === g.away) { showToast('⚠️ קבוצה לא יכולה לשחק נגד עצמה', '#f59e0b'); return; }
+  }
+
+  // מציאת ה-id הגבוה ביותר
+  const maxId = GAMES.length ? Math.max(...GAMES.map(g=>g.id)) : 0;
+
+  try {
+    const saves = newRoundGames.map((g, i) => {
+      const gameId = maxId + i + 1;
+      return window._fsSetDoc(window._fsDoc(window._db, 'games', String(gameId)), {
+        id: gameId, home: g.home, away: g.away, round: roundNum,
+        status: 'upcoming', hs: 0, as: 0, updatedAt: Date.now()
+      });
+    });
+    await Promise.all(saves);
+    showToast(`✅ מחזור ${roundNum} נוצר עם ${newRoundGames.length} משחקים!`, '#22c55e');
+    adminTab = 'results';
+    renderAdminContent();
+  } catch(e) {
+    console.error(e);
+    showToast('שגיאה בשמירה', '#f87171');
+  }
+}
+
+// ── פתיחה מחדש ──
+function renderAdminUnlock() {
+  const rounds = getRounds();
+  if (!rounds.length) return '<div style="text-align:center;color:#ffffff33;padding:30px">אין מחזורים.</div>';
+  let html = '<div style="font-size:13px;color:#ffffff66;margin-bottom:16px;line-height:1.6">פתיחת מחזור מחדש מאפשרת לכל המשתמשים לשנות את ניחושיהם. תשתמש בזה לפני שהמשחקים מתחילים.</div>';
+  rounds.slice().reverse().forEach(round => {
+    const rGames = GAMES.filter(g => g.round === round);
+    const allFinished = rGames.every(g => g.status === 'finished');
+    html += `
+      <div style="background:#13132a;border-radius:14px;border:1px solid #ffffff12;padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:800">מחזור ${round}</div>
+          <div style="font-size:11px;color:#ffffff44;margin-top:3px">${rGames.length} משחקים · ${allFinished?'הסתיים':'פעיל'}</div>
+        </div>
+        <button onclick="unlockRound(${round})"
+          style="padding:9px 16px;border-radius:10px;border:1px solid #3b82f644;background:#3b82f615;color:#3b82f6;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+          🔓 פתח מחדש
+        </button>
+      </div>`;
+  });
+  return html;
+}
+
+// ── איפוס ──
+function renderAdminReset() {
+  return `
+    <div style="background:#1a0a0a;border-radius:14px;border:1px solid #f8717133;padding:18px;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:800;color:#f87171;margin-bottom:6px">⚠️ אזור מסוכן</div>
+      <div style="font-size:13px;color:#ffffff66;line-height:1.6;margin-bottom:16px">האיפוס מוחק לצמיתות. לא ניתן לשחזר.</div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="resetGames()"
+          style="width:100%;padding:12px;border-radius:12px;border:1px solid #f8717155;background:#f8717115;color:#f87171;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
+          🗑️ מחק את כל המשחקים והמחזורים
+        </button>
+        <button onclick="resetPredictions()"
+          style="width:100%;padding:12px;border-radius:12px;border:1px solid #f59e0b55;background:#f59e0b15;color:#f59e0b;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
+          🗑️ מחק ניחושים וניקוד של כל המשתמשים
+        </button>
+        <button onclick="resetUsers()"
+          style="width:100%;padding:12px;border-radius:12px;border:1px solid #9400d355;background:#9400d315;color:#c084fc;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
+          🗑️ מחק את כל המשתמשים
+        </button>
+        <button onclick="resetAll()"
+          style="width:100%;padding:14px;border-radius:12px;border:none;background:#f87171;color:#000;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:4px">
+          💣 איפוס מלא — הכל
+        </button>
+      </div>
+    </div>`;
+}
+
+async function deleteCollection(colName) {
+  const snap = await window._fsGetDocs(window._fsCollection(window._db, colName));
+  await Promise.all(snap.docs.map(d => window._fsDeleteDoc(window._fsDoc(window._db, colName, d.id))));
+  return snap.size;
+}
+
+async function resetGames() {
+  if (!confirm('למחוק את כל המשחקים והמחזורים?\nהמשתמשים יישארו עם הניחושים הישנים.')) return;
+  try {
+    const n = await deleteCollection('games');
+    showToast(`🗑️ ${n} משחקים נמחקו`, '#f87171');
+    renderAdminContent();
+  } catch(e) { showToast('שגיאה', '#f87171'); console.error(e); }
+}
+
+async function resetPredictions() {
+  if (!confirm('למחק את כל הניחושים והניקוד?\nהמשתמשים יישארו רשומים.')) return;
+  try {
+    const snap = await window._fsGetDocs(window._fsCollection(window._db, 'users'));
+    await Promise.all(snap.docs.map(d =>
+      window._fsSetDoc(window._fsDoc(window._db, 'users', d.id), {
+        ...d.data(), predictions: {}, submitted: {}, points: 0, correct: 0
+      })
+    ));
+    predictions = {}; submitted = {};
+    showToast('🗑️ ניחושים וניקוד אופסו', '#f59e0b');
+  } catch(e) { showToast('שגיאה', '#f87171'); console.error(e); }
+}
+
+async function resetUsers() {
+  if (!confirm('למחוק את כל המשתמשים?\nהם יצטרכו להירשם מחדש.')) return;
+  try {
+    const n = await deleteCollection('users');
+    showToast(`🗑️ ${n} משתמשים נמחקו`, '#c084fc');
+  } catch(e) { showToast('שגיאה', '#f87171'); console.error(e); }
+}
+
+async function resetAll() {
+  if (!confirm('איפוס מלא — למחוק את הכל?\nמשחקים, ניחושים ומשתמשים.')) return;
+  if (!confirm('אישור אחרון — בטוח לגמרי?')) return;
+  try {
+    await Promise.all([
+      deleteCollection('games'),
+      deleteCollection('users'),
+    ]);
+    predictions = {}; submitted = {}; leaderboard = [];
+    localStorage.removeItem('winnerId');
+    localStorage.removeItem('winnerName');
+    localStorage.removeItem('winnerAvatar');
+    showToast('💣 איפוס מלא בוצע!', '#f87171');
+    document.getElementById('adminModal').style.display = 'none';
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) { showToast('שגיאה', '#f87171'); console.error(e); }
+}
+
+async function unlockRound(round) {
+  if (!window._db) return;
+  if (!confirm(`לפתוח את מחזור ${round} מחדש לניחוש?\nכל המשתמשים יוכלו לשנות את ניחושיהם.`)) return;
+  try {
+    const snap = await window._fsGetDocs(window._fsCollection(window._db, 'users'));
+    const updates = snap.docs.map(async docSnap => {
+      const data = docSnap.data();
+      const sub = { ...(data.submitted || {}) };
+      delete sub[round];
+      await window._fsSetDoc(window._fsDoc(window._db, 'users', docSnap.id), { ...data, submitted: sub });
+    });
+    await Promise.all(updates);
+    showToast(`🔓 מחזור ${round} נפתח מחדש!`, '#3b82f6');
+    renderAdminContent();
+  } catch(e) {
+    console.error(e);
+    showToast('שגיאה', '#f87171');
+  }
+}
+
+async function saveGameResult(gameId) {
+  const hs = parseInt(document.getElementById(`hs-${gameId}`).value);
+  const as = parseInt(document.getElementById(`as-${gameId}`).value);
+
+  if (isNaN(hs) || isNaN(as)) {
+    showToast('⚠️ הכנס תוצאה תקינה', '#f59e0b'); return;
+  }
+
+  const g = GAMES.find(x => x.id === gameId);
+  if (!g) return;
+
+  // שמירה ב-Firebase — listenGames יעדכן GAMES אוטומטית
+  if (window._db) {
+    try {
+      await window._fsSetDoc(window._fsDoc(window._db, 'games', String(gameId)), {
+        ...g, hs, as, status: 'finished', updatedAt: Date.now()
+      });
+    } catch(e) { console.error(e); showToast('שגיאה בשמירה', '#f87171'); return; }
+  }
+
+  // עדכון ניקוד לכל המשתמשים (עם התוצאה החדשה)
+  const updatedGames = GAMES.map(x => x.id===gameId ? {...x, hs, as, status:'finished'} : x);
+  await recalcAllUsersPoints(updatedGames);
+
+  showToast(`✅ תוצאה נשמרה! ${hs}–${as}`, '#22c55e');
+  renderAdminContent();
+}
+
+async function recalcAllUsersPoints(gamesList) {
+  if (!window._db) return;
+  const games = gamesList || GAMES;
+  const db = window._db;
+  try {
+    const snap = await new Promise(resolve => {
+      const unsub = window._fsOnSnapshot(window._fsCollection(db, 'users'), s => { unsub(); resolve(s); });
+    });
+    const updates = snap.docs.map(async docSnap => {
+      const data = docSnap.data();
+      const preds = data.predictions || {};
+      let correct = 0;
+      games.filter(g => g.status === 'finished').forEach(g => {
+        const pick = preds[g.id];
+        if (!pick) return;
+        const winner = g.hs > g.as ? 'home' : 'away';
+        if (pick === winner) correct++;
+      });
+      await window._fsSetDoc(window._fsDoc(db, 'users', docSnap.id), {
+        ...data, correct, points: correct * 3, updatedAt: Date.now()
+      });
+    });
+    await Promise.all(updates);
+  } catch(e) { console.error(e); }
+}
+
+// טעינת משחקים מ-Firebase — האזנה בזמן אמת
+function listenGames() {
+  if (!window._db) return;
+  window._fsOnSnapshot(window._fsCollection(window._db, 'games'), snap => {
+    const loaded = snap.docs.map(d => d.data());
+    // מיזוג: שמירת סדר לפי round ואז id
+    GAMES = loaded.sort((a,b) => a.round!==b.round ? a.round-b.round : a.id-b.id);
+    liveGames = GAMES.map(g => ({...g}));
+    // activeRound — הגדרה אוטומטית למחזור האחרון
+    const rounds = getRounds();
+    if (rounds.length && (activeRound === null || !rounds.includes(activeRound))) {
+      activeRound = rounds[rounds.length - 1];
+    }
+    render();
+  });
+}
+
+async function loadGamesFromFirebase() {
+  if (!window._db) return;
+  await new Promise(resolve => {
+    const unsub = window._fsOnSnapshot(window._fsCollection(window._db, 'games'), snap => {
+      unsub();
+      const loaded = snap.docs.map(d => d.data());
+      GAMES = loaded.sort((a,b) => a.round!==b.round ? a.round-b.round : a.id-b.id);
+      liveGames = GAMES.map(g => ({...g}));
+      const rounds = getRounds();
+      if (rounds.length) activeRound = rounds[rounds.length - 1];
+      resolve();
+    });
+  });
+  // המשך האזנה בזמן אמת
+  listenGames();
+}
+
+// ─── LIVE UPDATES מ-TheSportsDB (רענון כל 2 דקות) ───────────────────────────
+let liveRefreshInterval = null;
+let lastLiveRefresh = null;
+
+async function fetchLiveScores() {
+  try {
+    const leagueId = '4474';
+    const today = new Date().toISOString().split('T')[0];
+
+    // שליפת תוצאות היום
+    const url = `https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${today}&l=${leagueId}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    lastLiveRefresh = new Date();
+    updateLiveRefreshLabel();
+
+    // מציאת משחקים שיש להם תאריך ועדיין לא סיימו — כולל ימים קודמים
+    const pendingGames = GAMES.filter(g => g.status !== 'finished' && g.date);
+
+    // קיבוץ לפי תאריך — שליפה נפרדת לכל תאריך שאינו היום
+    const pastDates = [...new Set(
+      pendingGames
+        .filter(g => g.date < today)
+        .map(g => g.date)
+    )];
+
+    // שליפות נוספות לתאריכים שעברו
+    const extraFetches = pastDates.map(d =>
+      fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${d}&l=${leagueId}`)
+        .then(r => r.json())
+        .catch(() => ({ events: [] }))
+    );
+    const extraResults = await Promise.all(extraFetches);
+
+    // מיזוג כל האירועים
+    const allEvents = [
+      ...(data.events || []),
+      ...extraResults.flatMap(r => r.events || [])
+    ];
+
+    if (!allEvents.length) { if (currentTab === 'live') render(); return; }
+
+    let anyUpdate = false;
+
+    allEvents.forEach(ev => {
+      const homeId = matchTeamName(ev.strHomeTeam);
+      const awayId = matchTeamName(ev.strAwayTeam);
+      if (!homeId || !awayId) return;
+
+      const game = GAMES.find(g => g.home === homeId && g.away === awayId);
+      if (!game) return;
+
+      const hs = parseInt(ev.intHomeScore) || 0;
+      const as = parseInt(ev.intAwayScore) || 0;
+      const finishedStatuses = ['match finished', 'ft', 'ap', 'aet', 'finished', 'ended', 'final'];
+      const finished = finishedStatuses.includes((ev.strStatus || '').toLowerCase()) ||
+                       finishedStatuses.includes((ev.strProgress || '').toLowerCase()) ||
+                       (ev.intHomeScore !== null && ev.intHomeScore !== '' && ev.strStatus === '');
+      const isLive   = ev.strStatus === 'Match Running' ||
+                       (ev.strProgress && ev.strProgress !== '' && !finished);
+
+      const li = liveGames.findIndex(g => g.id === game.id);
+      if (li === -1) return;
+
+      const prev = liveGames[li];
+      const newStatus = finished ? 'finished' : isLive ? 'live' : game.status;
+      const quarter   = ev.strProgress || prev.q || '';
+
+      // אנימציית flash רק בלשונית חי
+      if (currentTab === 'live') {
+        if (hs !== prev.hs) {
+          const el = document.getElementById(`live-hs-${game.id}`);
+          if (el) { el.textContent = hs; el.classList.add('flash'); setTimeout(() => el && el.classList.remove('flash'), 600); }
+        }
+        if (as !== prev.as) {
+          const el = document.getElementById(`live-as-${game.id}`);
+          if (el) { el.textContent = as; el.classList.add('flash'); setTimeout(() => el && el.classList.remove('flash'), 600); }
+        }
+      }
+
+      liveGames[li] = { ...prev, hs, as, status: newStatus, q: quarter, clk: ev.strProgress || '' };
+      anyUpdate = true;
+
+      // אם הסתיים ועדיין לא עודכן — שמור ב-Firebase ועדכן ניקוד
+      if (finished && game.status !== 'finished') {
+        window._fsSetDoc(window._fsDoc(window._db, 'games', String(game.id)), {
+          ...game, hs, as, status: 'finished', updatedAt: Date.now()
+        }).then(() => {
+          showToast(`✅ ${getTeam(homeId).short} ${hs}–${as} ${getTeam(awayId).short} — תוצאה נקלטה אוטומטית!`, '#22c55e');
+          recalcAllUsersPoints();
+        }).catch(console.error);
+      }
+    });
+
+    if (currentTab === 'live') render();
+
+  } catch(err) {
+    console.error('Live fetch error:', err);
+    if (currentTab === 'live') render(); // render even on error so Firebase data shows
+  }
+}
+
+async function manualRefresh(btn) {
+  btn.textContent = "⏳ טוען...";
+  btn.disabled = true;
+  await fetchLiveScores();
+  btn.textContent = "↻ רענן";
+  btn.disabled = false;
+  showToast("🔄 עודכן!", "#3b82f6");
+}
+function updateLiveRefreshLabel() {
+  const el = document.getElementById('liveRefreshTime');
+  if (el && lastLiveRefresh) {
+    el.textContent = `עודכן ב-${lastLiveRefresh.toLocaleTimeString('he-IL', {hour:'2-digit',minute:'2-digit'})}`;
+  }
+}
+
+function startLivePolling() {
+  if (liveRefreshInterval) return;
+  fetchLiveScores(); // מיד בפתיחה
+  liveRefreshInterval = setInterval(fetchLiveScores, 2 * 60 * 1000); // כל 2 דקות
+}
+
+function stopLivePolling() {
+  if (liveRefreshInterval) { clearInterval(liveRefreshInterval); liveRefreshInterval = null; }
+}
+
+// הפעל polling רק כשנמצאים בלשונית "חי"
+const _origSetTab = setTab;
+window.setTab = function(tab) {
+  _origSetTab(tab);
+  if (tab === 'live') startLivePolling();
+  else stopLivePolling();
+};
+
+
+// ─── REGISTRATION ────────────────────────────────────────────────────────────
+const AVATARS = ['🏀','⚡','🔥','👑','🎯','🦅','💎','🌟','🏆','🐯','🦁','🐺','🚀','🎮','💪','😎'];
+let pickedAvatar = '';
+
+function initRegScreen() {
+  document.getElementById('avatarPicker').innerHTML = AVATARS.map(a =>
+    `<button class="avatar-btn" onclick="pickAvatar('${a}',this)">${a}</button>`
+  ).join('');
+}
+function pickAvatar(avatar, btn) {
+  pickedAvatar = avatar;
+  document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('picked'));
+  btn.classList.add('picked'); checkRegReady();
+}
+function onNicknameInput() {
+  const val = document.getElementById('nicknameInput').value;
+  document.getElementById('charCount').textContent = `${val.length}/16`;
+  checkRegReady();
+}
+function checkRegReady() {
+  const name = document.getElementById('nicknameInput').value.trim();
+  const btn = document.getElementById('regBtn');
+  const ok = name.length>=2 && pickedAvatar!=='';
+  btn.disabled = !ok; btn.style.opacity = ok?'1':'0.35';
+}
+
+async function registerUser() {
+  const name = document.getElementById('nicknameInput').value.trim();
+  if (!name || !pickedAvatar) return;
+
+  const btn = document.getElementById('regBtn');
+  const input = document.getElementById('nicknameInput');
+  btn.textContent = '⏳ בודק...';
+  btn.disabled = true;
+
+  try {
+    // בדיקה אם הכינוי כבר קיים
+    if (window._db) {
+      const snap = await new Promise(resolve => {
+        const unsub = window._fsOnSnapshot(window._fsCollection(window._db, 'users'), s => { unsub(); resolve(s); });
+      });
+      const existingDoc = snap.docs.find(d => (d.data().name || '').trim().toLowerCase() === name.toLowerCase());
+      if (existingDoc) {
+        // כינוי קיים — מתחברים כמשתמש הקיים
+        const existingData = existingDoc.data();
+        const newAvatar = pickedAvatar || existingData.avatar || '🏀';
+        currentUser = { id: existingDoc.id, name: existingData.name, avatar: newAvatar };
+        localStorage.setItem('winnerId', existingDoc.id);
+        localStorage.setItem('winnerName', existingData.name);
+        localStorage.setItem('winnerAvatar', newAvatar);
+        await loadMyDataFromFirebase();
+        // עדכון אמוג'י ב-Firebase אם השתנה
+        if (newAvatar !== existingData.avatar) {
+          await window._fsSetDoc(window._fsDoc(window._db, 'users', existingDoc.id), { avatar: newAvatar }, { merge: true });
+        }
+        listenLeaderboard();
+        document.getElementById('regOverlay').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        showToast(`ברוך הבא בחזרה, ${existingData.name}! 🎉`);
+        render();
+        return;
+      }
+    }
+
+    // כינוי פנוי — נרשמים
+    const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    currentUser = { id: userId, name, avatar: pickedAvatar };
+    localStorage.setItem('winnerId', userId);
+    localStorage.setItem('winnerName', name);
+    localStorage.setItem('winnerAvatar', pickedAvatar);
+    await loadMyDataFromFirebase();
+    await savePredictionsToFirebase();
+    listenLeaderboard();
+
+    document.getElementById('regOverlay').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    showToast(`ברוך הבא, ${name}! 🎉`);
+    render();
+
+  } catch (err) {
+    console.error(err);
+    showToast('שגיאת חיבור, נסה שוב', '#f87171');
+    btn.textContent = 'בואו נשחק! 🎯';
+    btn.disabled = false;
+  }
+}
+
+async function tryAutoLogin() {
+  const savedId     = localStorage.getItem('winnerId');
+  const savedName   = localStorage.getItem('winnerName');
+  const savedAvatar = localStorage.getItem('winnerAvatar');
+  if (!savedId || !savedName) return false;
+
+  // מחכים ש-Firebase יהיה מוכן
+  if (!window._firebaseReady) {
+    await new Promise(resolve => window.addEventListener('firebaseReady', resolve, { once: true }));
+  }
+
+  currentUser = { id: savedId, name: savedName, avatar: savedAvatar || '🏀' };
+  await loadMyDataFromFirebase();
+  listenLeaderboard();
+
+  document.getElementById('regOverlay').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  render();
+  return true;
+}
+
+document.getElementById('app').style.display = 'none';
+initRegScreen();
+
+async function initApp() {
+  // מחכים ל-Firebase ואז טוענים תוצאות משחקים
+  if (!window._firebaseReady) {
+    await new Promise(resolve => window.addEventListener('firebaseReady', resolve, { once: true }));
+  }
+  await loadGamesFromFirebase();
+  await tryAutoLogin();
+  // פולינג ברקע כל 2 דקות גם מחוץ ללשונית "חי"
+  fetchLiveScores();
+  setInterval(fetchLiveScores, 2 * 60 * 1000);
+}
+initApp();
+
+// ─── PWA Service Worker ───────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+
+// ─── לחצן חזרה — אישור יציאה ─────────────────────────────────────────────────
+history.pushState({ page: 'app' }, '');
+
+window.addEventListener('popstate', () => {
+  const adminModal = document.getElementById('adminModal');
+  const userModal  = document.getElementById('userModal');
+  if (adminModal?.style.display === 'flex') {
+    adminModal.style.display = 'none';
+    history.pushState({ page: 'app' }, '');
+    return;
+  }
+  if (userModal?.style.display === 'flex') {
+    userModal.style.display = 'none';
+    history.pushState({ page: 'app' }, '');
+    return;
+  }
+  showExitDialog();
+  history.pushState({ page: 'app' }, '');
+});
+
+function doExit() {
+  window.close();
+  setTimeout(() => {
+    if (!document.hidden) {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#080810;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:inherit;text-align:center;padding:32px;';
+      msg.innerHTML = `
+        <div style="font-size:48px">🏀</div>
+        <div style="font-size:18px;font-weight:800;color:#fff">כדי לצאת מהאפליקציה</div>
+        <div style="font-size:14px;color:#ffffff88;line-height:1.8">לחץ על כפתור הבית<br>או סגור את הלשונית ידנית</div>
+        <button onclick="this.parentElement.remove()" style="margin-top:8px;padding:12px 28px;border-radius:14px;border:1px solid #ffffff20;background:#ffffff10;color:#ffffffcc;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">חזרה לאפליקציה</button>`;
+      document.body.appendChild(msg);
+    }
+  }, 400);
+}
+
+function showExitDialog() {
+  if (document.getElementById('exitDialog')) {
+    doExit();
+    return;
+  }
+  const overlay = document.createElement('div');
+  overlay.id = 'exitDialog';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000000bb;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#13132a;border-radius:24px 24px 0 0;border:1px solid #ffffff15;width:100%;max-width:480px;padding:28px 24px 44px;text-align:center;animation:slideUpBox 0.25s ease">
+      <div style="font-size:40px;margin-bottom:12px">🏀</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px">לחץ שוב פעם ליציאה</div>
+      <div style="font-size:13px;color:#ffffff55;margin-bottom:28px">הניחושים שלך שמורים בענן 👍</div>
+      <div style="display:flex;gap:12px;justify-content:center">
+        <button id="exitCancel" style="flex:1;padding:14px;border-radius:16px;border:1px solid #ffffff20;background:#ffffff08;color:#ffffffcc;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">ביטול</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('exitCancel').onclick = () => overlay.remove();
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  setTimeout(() => { if (document.getElementById('exitDialog')) overlay.remove(); }, 3000);
+}
+
+</script>
+</body>
+</html>
