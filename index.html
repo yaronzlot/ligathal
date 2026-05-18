@@ -1379,15 +1379,30 @@ function renderAdminReset() {
       <div style="display:flex;flex-direction:column;gap:10px">
 
         <div style="background:#ffffff08;border-radius:12px;border:1px solid #f8717133;padding:14px">
-          <div style="font-size:13px;font-weight:700;color:#f87171;margin-bottom:10px">🗑️ מחיקת מחזור ספציפי</div>
-          <select id="deleteRoundSelect"
-            style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px">
-            ${roundOptions || '<option value="">אין מחזורים</option>'}
-          </select>
-          <button onclick="deleteRound()" ${!rounds.length ? 'disabled' : ''}
-            style="width:100%;padding:11px;border-radius:10px;border:1px solid #f8717155;background:#f8717120;color:#f87171;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
-            🗑️ מחק מחזור נבחר
-          </button>
+          <div style="font-size:13px;font-weight:700;color:#f87171;margin-bottom:6px">🗑️ מחיקת מחזור לפי מספר</div>
+          <div style="font-size:11px;color:#ffffff44;margin-bottom:10px;line-height:1.6">הקלד מספר מחזור — ישאב את כל המשחקים שלו ישירות מ-Firebase וימחק אותם, גם אם אינם מוצגים ברשימה.</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="deleteRoundInput" type="number" min="1" max="99" placeholder="מחזור..."
+              style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid #f8717155;background:#0f0f22;color:#fff;font-size:18px;font-weight:900;text-align:center;font-family:inherit;outline:none"
+              onfocus="this.style.borderColor='#f87171'" onblur="this.style.borderColor='#f8717155'"
+              oninput="updateDeleteRoundPreview(parseInt(this.value))"
+              onkeydown="if(event.key==='Enter')deleteRoundByInput()" />
+            <button onclick="deleteRoundByInput()"
+              style="padding:10px 18px;border-radius:10px;border:1px solid #f8717155;background:#f8717120;color:#f87171;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap">
+              🗑️ מחק
+            </button>
+          </div>
+          <div id="deleteRoundPreview" style="font-size:12px;color:#ffffff55;text-align:center;min-height:18px;margin-bottom:4px"></div>
+
+          ${rounds.length ? `
+          <div style="border-top:1px solid #ffffff10;margin-top:12px;padding-top:12px">
+            <div style="font-size:11px;color:#ffffff44;margin-bottom:8px">או בחר מהרשימה:</div>
+            <select id="deleteRoundSelect" onchange="syncRoundInput(this.value)"
+              style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ffffff20;background:#0f0f22;color:#fff;font-size:13px;font-family:inherit;outline:none">
+              <option value="">— בחר מחזור —</option>
+              ${roundOptions}
+            </select>
+          </div>` : ''}
         </div>
 
         <button onclick="resetGames()"
@@ -1410,25 +1425,68 @@ function renderAdminReset() {
     </div>`;
 }
 
-async function deleteRound() {
-  const select = document.getElementById('deleteRoundSelect');
-  const round = parseInt(select?.value);
-  if (!round) { showToast('⚠️ בחר מחזור למחיקה', '#f59e0b'); return; }
+function syncRoundInput(val) {
+  const input = document.getElementById('deleteRoundInput');
+  if (input && val) {
+    input.value = val;
+    updateDeleteRoundPreview(parseInt(val));
+  }
+}
 
-  const rGames = GAMES.filter(g => g.round === round);
-  if (!confirm(`למחוק את מחזור ${round} עם ${rGames.length} משחקים? הפעולה בלתי הפיכה.`)) return;
+function updateDeleteRoundPreview(round) {
+  const preview = document.getElementById('deleteRoundPreview');
+  if (!preview) return;
+  if (!round || isNaN(round)) { preview.textContent = ''; return; }
+  const localGames = GAMES.filter(g => g.round === round);
+  if (localGames.length > 0) {
+    preview.innerHTML = `<span style="color:#f59e0b">⚠️ נמצאו ${localGames.length} משחקים במחזור ${round} במטמון המקומי</span>`;
+  } else {
+    preview.innerHTML = `<span style="color:#ffffff44">מחזור ${round} לא נמצא במטמון — ישאב ישירות מ-Firebase</span>`;
+  }
+}
+
+async function deleteRoundByInput() {
+  const input = document.getElementById('deleteRoundInput');
+  const round = parseInt(input?.value);
+  if (!round || round < 1) { showToast('⚠️ הכנס מספר מחזור תקין', '#f59e0b'); return; }
+
+  const preview = document.getElementById('deleteRoundPreview');
+  if (preview) preview.innerHTML = `<span style="color:#ffffff55">⏳ שואב נתונים מ-Firebase...</span>`;
 
   try {
-    await Promise.all(rGames.map(g =>
-      window._fsDeleteDoc(window._fsDoc(window._db, 'games', String(g.id)))
+    const { getDocs, query, where } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const q = query(window._fsCollection(window._db, 'games'), where('round', '==', round));
+    const snap = await getDocs(q);
+
+    const count = snap.size;
+    if (count === 0) {
+      showToast(`⚠️ לא נמצאו משחקים במחזור ${round}`, '#f59e0b');
+      if (preview) preview.innerHTML = `<span style="color:#f59e0b">לא נמצאו משחקים במחזור ${round} ב-Firebase</span>`;
+      return;
+    }
+
+    if (!confirm(`למחוק את מחזור ${round} עם ${count} משחקים?\nהפעולה בלתי הפיכה.`)) {
+      if (preview) preview.innerHTML = '';
+      return;
+    }
+
+    await Promise.all(snap.docs.map(d =>
+      window._fsDeleteDoc(window._fsDoc(window._db, 'games', d.id))
     ));
-    showToast(`✅ מחזור ${round} נמחק (${rGames.length} משחקים)`, '#22c55e');
+
+    showToast(`✅ מחזור ${round} נמחק (${count} משחקים)`, '#22c55e');
     await loadGamesFromFirebase();
     renderAdminContent();
   } catch(e) {
     console.error(e);
-    showToast('שגיאה במחיקה', '#f87171');
+    showToast('שגיאה במחיקה: ' + e.message, '#f87171');
+    if (preview) preview.innerHTML = `<span style="color:#f87171">שגיאה: ${e.message}</span>`;
   }
+}
+
+// נשמר לתאימות לאחור
+async function deleteRound() {
+  await deleteRoundByInput();
 }
 
 async function deleteCollection(colName) {
