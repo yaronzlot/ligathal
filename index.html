@@ -383,7 +383,11 @@ function renderPredict() {
 
   if (finished.length > 0) {
     html += '<div class="section-label" style="margin-top:20px">✅ תוצאות</div>';
-    finished.forEach(g => { html += renderFinishedCard(g); });
+    [...finished].sort((a, b) => {
+      const da = new Date((a.date || '1970-01-01') + 'T' + (a.time || '23:59'));
+      const db = new Date((b.date || '1970-01-01') + 'T' + (b.time || '23:59'));
+      return db - da;
+    }).forEach(g => { html += renderFinishedCard(g); });
   }
 
   if (!upcoming.length && !finished.length) html += '<div class="empty">אין משחקים למחזור זה</div>';
@@ -569,7 +573,11 @@ function renderLive() {
 
   if (finished.length) {
     html += '<div class="section-label" style="margin-top:16px">✅ תוצאות סופיות</div>';
-    [...finished].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(g => {
+    [...finished].sort((a, b) => {
+      const da = new Date((a.date || '1970-01-01') + 'T' + (a.time || '23:59'));
+      const db = new Date((b.date || '1970-01-01') + 'T' + (b.time || '23:59'));
+      return db - da;
+    }).forEach(g => {
       const home = getTeam(g.home), away = getTeam(g.away);
       const winnerHome = g.hs > g.as;
       html += `
@@ -629,7 +637,11 @@ function renderHistory() {
   rounds.forEach(round => {
     const rGames = finishedGames.filter(g => g.round === round);
     let roundCorrect = 0, roundPicked = 0;
-    rGames.forEach(g => {
+    [...rGames].sort((a, b) => {
+      const da = new Date((a.date || '1970-01-01') + 'T' + (a.time || '23:59'));
+      const db = new Date((b.date || '1970-01-01') + 'T' + (b.time || '23:59'));
+      return db - da;
+    }).forEach(g => {
       const pick = predictions[g.id];
       if (!pick) return;
       roundPicked++;
@@ -652,7 +664,11 @@ function renderHistory() {
         </div>
         <div style="padding:10px 12px">`;
 
-    rGames.forEach(g => {
+    [...rGames].sort((a, b) => {
+      const da = new Date((a.date || '1970-01-01') + 'T' + (a.time || '23:59'));
+      const db = new Date((b.date || '1970-01-01') + 'T' + (b.time || '23:59'));
+      return db - da;
+    }).forEach(g => {
       const home = getTeam(g.home), away = getTeam(g.away);
       const pick = predictions[g.id];
       const winner = g.hs > g.as ? 'home' : 'away';
@@ -1196,7 +1212,11 @@ function renderAdminResults() {
   rounds.slice().reverse().forEach(round => {
     const rGames = GAMES.filter(g => g.round === round);
     html += `<div style="font-size:12px;font-weight:700;color:#ffd700aa;letter-spacing:1px;margin-bottom:10px;margin-top:${round===rounds[rounds.length-1]?0:20}px">מחזור ${round}</div>`;
-    rGames.forEach(g => {
+    [...rGames].sort((a, b) => {
+      const da = new Date((a.date || '1970-01-01') + 'T' + (a.time || '23:59'));
+      const db = new Date((b.date || '1970-01-01') + 'T' + (b.time || '23:59'));
+      return db - da;
+    }).forEach(g => {
       const home = getTeam(g.home), away = getTeam(g.away);
       const isFinished = g.status === 'finished';
       html += `
