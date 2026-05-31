@@ -758,10 +758,10 @@ function openUserModal(userId) {
         <div style="font-size:13px;color:#ffffff66;margin-top:3px">${rankLabel} · ${u.points || 0} נקודות · ${u.correct || 0} נכונים</div>
       </div>
     </div>
-    <div class="section-label" style="margin-bottom:12px">🎯 ניחושים — מחזור 26</div>`;
+    <div class="section-label" style="margin-bottom:12px">🎯 ניחושים — מחזור ${activeRound}</div>`;
 
-  const upcomingGames = GAMES.filter(g => g.round === 26 && g.status === 'upcoming');
-  const finishedGames = GAMES.filter(g => g.round === 26 && g.status === 'finished');
+  const upcomingGames = GAMES.filter(g => g.round === activeRound && g.status === 'upcoming');
+  const finishedGames = GAMES.filter(g => g.round === activeRound && g.status === 'finished');
   const allGames = [...finishedGames, ...upcomingGames];
 
   if (allGames.length === 0) {
