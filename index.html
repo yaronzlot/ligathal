@@ -134,6 +134,7 @@
       onfocus="this.style.borderColor='#ffd700'" onblur="this.style.borderColor='#ffffff20'" />
     <span id="charCount" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:11px;color:#ffffff33">0/16</span>
   </div>
+  <div id="similarNameWarning" style="display:none;width:100%;max-width:320px;margin-top:-12px;margin-bottom:12px;background:#f59e0b18;border:1px solid #f59e0b55;border-radius:12px;padding:10px 14px;font-size:13px;color:#f59e0b;line-height:1.5;text-align:right"></div>
   <button id="regBtn" disabled onclick="registerUser()"
     style="width:100%;max-width:320px;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 8px 32px #ff450044;opacity:0.35;transition:opacity 0.2s">
     בואו נשחק! 🎯
@@ -870,6 +871,7 @@ function renderAdminContent() {
       <button style="${tabStyle('update-dates')}" onclick="setAdminTab('update-dates')">📅 עדכן תאריכים</button>
       <button style="${tabStyle('unlock')}" onclick="setAdminTab('unlock')">🔓 פתיחה מחדש</button>
       <button style="${tabStyle('reset')}" onclick="setAdminTab('reset')">🗑️ איפוס</button>
+      <button style="${tabStyle('users')}" onclick="setAdminTab('users')">👥 משתמשים</button>
     </div>`;
 
   if (adminTab === 'results') {
@@ -884,6 +886,8 @@ function renderAdminContent() {
     html += renderAdminUnlock();
   } else if (adminTab === 'reset') {
     html += renderAdminReset();
+  } else if (adminTab === 'users') {
+    html += renderAdminUsers();
   }
 
   document.getElementById('adminContent').innerHTML = html;
@@ -1366,6 +1370,133 @@ function renderAdminUnlock() {
   return html;
 }
 
+// ── ניהול משתמשים ──
+function renderAdminUsers() {
+  if (!leaderboard.length) {
+    return '<div style="text-align:center;color:#ffffff33;padding:30px">אין משתמשים רשומים.</div>';
+  }
+
+  // זיהוי כפולים לפי שם
+  const byName = {};
+  leaderboard.forEach(u => {
+    const key = u.name.trim().toLowerCase();
+    if (!byName[key]) byName[key] = [];
+    byName[key].push(u);
+  });
+  const duplicates = Object.values(byName).filter(arr => arr.length > 1);
+
+  let html = `<div style="font-size:13px;color:#ffffff66;margin-bottom:16px;line-height:1.6">ניהול משתמשים רשומים. ניתן למזג כפולים (מעביר ניחושים ונקודות) או למחוק משתמש.</div>`;
+
+  if (duplicates.length > 0) {
+    html += `<div style="background:#1a1200;border-radius:14px;border:1px solid #ffd70033;padding:14px;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:800;color:#ffd700;margin-bottom:12px">⚠️ משתמשים כפולים (${duplicates.length} קבוצות)</div>`;
+    duplicates.forEach(group => {
+      const sorted = [...group].sort((a,b) => (b.points||0)-(a.points||0));
+      const main = sorted[0];
+      html += `<div style="background:#ffffff08;border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700;color:#ffffffcc;margin-bottom:8px">👤 "${main.name}"</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">`;
+      sorted.forEach((u, idx) => {
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;background:${idx===0?'#22c55e15':'#ffffff05'};border:1px solid ${idx===0?'#22c55e33':'#ffffff10'}">
+          <span style="font-size:12px;color:#ffffffcc">${u.avatar||'🏀'} ${u.name}${idx===0?' (ראשי)':''}</span>
+          <span style="font-size:11px;color:#ffffff66">${u.points||0} נק' · ${u.correct||0} נכונים</span>
+        </div>`;
+      });
+      html += `</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="mergeUsers('${main.id}', [${sorted.slice(1).map(u=>`'${u.id}'`).join(',')}])"
+            style="flex:1;padding:9px;border-radius:10px;border:1px solid #22c55e44;background:#22c55e15;color:#22c55e;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+            🔀 מזג לראשי
+          </button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div style="background:#0a1a0a;border-radius:12px;border:1px solid #22c55e33;padding:12px;margin-bottom:16px;text-align:center;font-size:13px;color:#22c55e">✅ אין משתמשים כפולים</div>`;
+  }
+
+  html += `<div style="font-size:12px;font-weight:700;color:#ffffff44;letter-spacing:1px;margin-bottom:10px">כל המשתמשים (${leaderboard.length})</div>`;
+  const sorted = [...leaderboard].sort((a,b) => (b.points||0)-(a.points||0));
+  sorted.forEach((u, i) => {
+    html += `<div style="background:#13132a;border-radius:12px;border:1px solid #ffffff12;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+      <div style="font-size:22px">${u.avatar||'🏀'}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700">#${i+1} ${u.name}</div>
+        <div style="font-size:11px;color:#ffffff44;margin-top:2px">${u.points||0} נק' · ${u.correct||0} נכונים · ${u.totalPicked||0} ניחושים</div>
+        <div style="font-size:10px;color:#ffffff22;margin-top:1px;word-break:break-all">ID: ${u.id}</div>
+      </div>
+      <button onclick="confirmDeleteUser('${u.id}','${u.name.replace(/'/g,"\\\'")}')"
+        style="padding:7px 12px;border-radius:8px;border:1px solid #f8717144;background:#f8717110;color:#f87171;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">
+        🗑️
+      </button>
+    </div>`;
+  });
+  return html;
+}
+
+async function mergeUsers(mainId, duplicateIds) {
+  if (!duplicateIds.length) return;
+  const names = duplicateIds.map(id => leaderboard.find(u=>u.id===id)?.name).filter(Boolean).join(', ');
+  if (!confirm(`למזג את "${names}" לתוך המשתמש הראשי?\nהניחושים והנקודות יועברו, והכפולים יימחקו.`)) return;
+
+  try {
+    const mainUser = leaderboard.find(u => u.id === mainId);
+    if (!mainUser) { showToast('משתמש ראשי לא נמצא', '#f87171'); return; }
+
+    for (const dupId of duplicateIds) {
+      const dupUser = leaderboard.find(u => u.id === dupId);
+      if (!dupUser) continue;
+
+      // מיזוג נקודות, נכונים, ניחושים
+      const mergedPoints  = (mainUser.points||0)  + (dupUser.points||0);
+      const mergedCorrect = (mainUser.correct||0) + (dupUser.correct||0);
+      const mergedPicked  = (mainUser.totalPicked||0) + (dupUser.totalPicked||0);
+
+      // מיזוג ניחושים — ניחושי הראשי מנצחים בקונפליקט
+      const mergedPreds = { ...(dupUser.predictions||{}), ...(mainUser.predictions||{}) };
+      const mergedSubmitted = { ...(dupUser.submitted||{}), ...(mainUser.submitted||{}) };
+
+      // עדכון משתמש ראשי
+      await window._fsSetDoc(window._fsDoc(window._db, 'users', mainId), {
+        ...mainUser,
+        points: mergedPoints,
+        correct: mergedCorrect,
+        totalPicked: mergedPicked,
+        predictions: mergedPreds,
+        submitted: mergedSubmitted,
+        updatedAt: Date.now()
+      });
+
+      // מחיקת הכפול
+      await window._fsDeleteDoc(window._fsDoc(window._db, 'users', dupId));
+    }
+
+    showToast('✅ המיזוג הושלם!', '#22c55e');
+    await loadMyDataFromFirebase();
+    renderAdminContent();
+  } catch(e) {
+    console.error(e);
+    showToast('שגיאה במיזוג: ' + e.message, '#f87171');
+  }
+}
+
+function confirmDeleteUser(userId, userName) {
+  if (!confirm(`למחוק את המשתמש "${userName}"?\nכל הניחושים והנקודות שלו יאבדו לצמיתות.`)) return;
+  deleteUser(userId, userName);
+}
+
+async function deleteUser(userId, userName) {
+  try {
+    await window._fsDeleteDoc(window._fsDoc(window._db, 'users', userId));
+    showToast(`🗑️ "${userName}" נמחק`, '#f87171');
+    renderAdminContent();
+  } catch(e) {
+    console.error(e);
+    showToast('שגיאה במחיקה: ' + e.message, '#f87171');
+  }
+}
+
 // ── איפוס ──
 function renderAdminReset() {
   const rounds = getRounds();
@@ -1807,6 +1938,62 @@ function onNicknameInput() {
   const val = document.getElementById('nicknameInput').value;
   document.getElementById('charCount').textContent = `${val.length}/16`;
   checkRegReady();
+  checkSimilarNames(val.trim());
+}
+
+// מחשב מרחק עריכה (Levenshtein) בין שני מחרוזות
+function levenshtein(a, b) {
+  a = a.toLowerCase(); b = b.toLowerCase();
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, (_, i) => Array.from({length: n+1}, (_, j) => i===0?j:j===0?i:0));
+  for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+let _regAllUsers = []; // שמות קיימים — נטענים פעם אחת
+
+async function checkSimilarNames(name) {
+  const warningEl = document.getElementById('similarNameWarning');
+  if (!warningEl) return;
+  if (name.length < 2) { warningEl.style.display = 'none'; return; }
+
+  // טעינה חד-פעמית של רשימת המשתמשים
+  if (!_regAllUsers.length && window._db) {
+    try {
+      const snap = await new Promise(resolve => {
+        const unsub = window._fsOnSnapshot(window._fsCollection(window._db, 'users'), s => { unsub(); resolve(s); });
+      });
+      _regAllUsers = snap.docs.map(d => d.data().name || '');
+    } catch(e) { return; }
+  }
+
+  // חיפוש שמות דומים (לא זהים בדיוק — אלה יטופלו בהרשמה)
+  const exact = _regAllUsers.find(n => n.trim().toLowerCase() === name.toLowerCase());
+  if (exact) {
+    warningEl.innerHTML = `✅ הכינוי "<strong>${exact}</strong>" כבר קיים — תתחבר אוטומטית לחשבון שלו!`;
+    warningEl.style.background = '#22c55e18';
+    warningEl.style.borderColor = '#22c55e55';
+    warningEl.style.color = '#22c55e';
+    warningEl.style.display = 'block';
+    return;
+  }
+
+  const similar = _regAllUsers.filter(n => {
+    const dist = levenshtein(name, n.trim());
+    const maxLen = Math.max(name.length, n.trim().length);
+    return dist > 0 && dist <= Math.max(1, Math.floor(maxLen * 0.35));
+  });
+
+  if (similar.length) {
+    warningEl.innerHTML = `⚠️ שם דומה כבר קיים: <strong>${similar.join(', ')}</strong><br><span style="font-size:11px;opacity:0.8">אם זה אתה — כתוב את השם בדיוק כפי שנרשמת.</span>`;
+    warningEl.style.background = '#f59e0b18';
+    warningEl.style.borderColor = '#f59e0b55';
+    warningEl.style.color = '#f59e0b';
+    warningEl.style.display = 'block';
+  } else {
+    warningEl.style.display = 'none';
+  }
 }
 function checkRegReady() {
   const name = document.getElementById('nicknameInput').value.trim();
