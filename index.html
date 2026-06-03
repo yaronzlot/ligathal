@@ -228,6 +228,7 @@ window._fsOrderBy = orderBy;
 window._fsDeleteDoc = deleteDoc;
 window._fsUpdateDoc = updateDoc;
 window._fsDoc = doc;
+window._db = db;
 window._fsGetDocs = getDocs;
 window._firebaseReady = true;
 window.dispatchEvent(new Event('firebaseReady'));
@@ -1204,7 +1205,7 @@ async function updateAllDates(btn) {
 async function deleteGame(gameId) {
   if (!confirm('למחוק את המשחק הזה לגמרי? הפעולה לא הפיכה.')) return;
   try {
-    await window._fsDeleteDoc(window._fsDoc(db, 'games', String(gameId)));
+    await window._fsDeleteDoc(window._fsDoc(window._db, 'games', String(gameId)));
     GAMES = GAMES.filter(g => g.id !== gameId);
     renderAdminContent();
     render();
@@ -1252,7 +1253,7 @@ async function saveEditGameTeams(gameId, btn) {
   const newAway = parseInt(document.getElementById('editAway').value);
   if (newHome === newAway) { alert('קבוצת החוץ והבית לא יכולות להיות זהות'); return; }
   try {
-    await window._fsUpdateDoc(window._fsDoc(db, 'games', String(gameId)), { home: newHome, away: newAway });
+    await window._fsUpdateDoc(window._fsDoc(window._db, 'games', String(gameId)), { home: newHome, away: newAway });
     const g = GAMES.find(x => x.id === gameId);
     if (g) { g.home = newHome; g.away = newAway; }
     btn.closest('div[style*=fixed]').remove();
