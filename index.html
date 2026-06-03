@@ -1199,6 +1199,71 @@ async function updateAllDates(btn) {
 }
 
 
+async function deleteGame(gameId) {
+  if (!confirm('למחוק את המשחק הזה לגמרי? הפעולה לא הפיכה.')) return;
+  try {
+    const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    await deleteDoc(doc(db, 'games', String(gameId)));
+    GAMES = GAMES.filter(g => g.id !== gameId);
+    renderAdminContent();
+    render();
+    alert('המשחק נמחק ✅');
+  } catch(e) {
+    alert('שגיאה במחיקה: ' + e.message);
+  }
+}
+
+async function editGameTeams(gameId) {
+  const g = GAMES.find(x => x.id === gameId);
+  if (!g) return;
+  const teamOptions = TEAMS.map(t => `<option value="${t.id}" ${t.id===g.home?'selected':''}>${t.short}</option>`).join('');
+  const teamOptionsAway = TEAMS.map(t => `<option value="${t.id}" ${t.id===g.away?'selected':''}>${t.short}</option>`).join('');
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:400;background:#000000cc;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#1a1a3e;border-radius:20px;padding:24px;width:100%;max-width:360px;border:1px solid #ffffff20">
+      <div style="font-size:16px;font-weight:800;color:#ffd700;margin-bottom:20px;text-align:center">✏️ עריכת קבוצות</div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;color:#ffffff66;margin-bottom:6px">קבוצת חוץ</div>
+        <select id="editHome" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ffffff20;background:#ffffff08;color:#fff;font-family:inherit;font-size:14px">${teamOptions}</select>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:12px;color:#ffffff66;margin-bottom:6px">קבוצת בית</div>
+        <select id="editAway" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ffffff20;background:#ffffff08;color:#fff;font-family:inherit;font-size:14px">${teamOptionsAway}</select>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="this.closest('div[style*=fixed]').remove()"
+          style="flex:1;padding:12px;border-radius:12px;border:1px solid #ffffff20;background:transparent;color:#ffffff88;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+          ביטול
+        </button>
+        <button onclick="saveEditGameTeams(${gameId}, this)"
+          style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
+          💾 שמור
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveEditGameTeams(gameId, btn) {
+  const newHome = parseInt(document.getElementById('editHome').value);
+  const newAway = parseInt(document.getElementById('editAway').value);
+  if (newHome === newAway) { alert('קבוצת החוץ והבית לא יכולות להיות זהות'); return; }
+  try {
+    const { updateDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    await updateDoc(doc(db, 'games', String(gameId)), { home: newHome, away: newAway });
+    const g = GAMES.find(x => x.id === gameId);
+    if (g) { g.home = newHome; g.away = newAway; }
+    btn.closest('div[style*=fixed]').remove();
+    renderAdminContent();
+    render();
+    alert('הקבוצות עודכנו ✅');
+  } catch(e) {
+    alert('שגיאה: ' + e.message);
+  }
+}
+
 function renderAdminResults() {
   if (!GAMES.length) return '<div style="text-align:center;color:#ffffff33;padding:30px">אין משחקים עדיין.<br>הוסף מחזור חדש תחילה.</div>';
   const rounds = getRounds();
@@ -1231,6 +1296,16 @@ function renderAdminResults() {
             style="width:100%;margin-top:10px;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#ff4500,#ffd700);color:#000;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit">
             💾 שמור תוצאה
           </button>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button onclick="editGameTeams(${g.id})"
+              style="flex:1;padding:8px;border-radius:10px;border:none;background:#1e3a5f;color:#60a5fa;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+              ✏️ עריכת קבוצות
+            </button>
+            <button onclick="deleteGame(${g.id})"
+              style="flex:1;padding:8px;border-radius:10px;border:none;background:#3f1010;color:#f87171;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+              🗑️ מחק משחק
+            </button>
+          </div>
         </div>`;
     });
   });
