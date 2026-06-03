@@ -204,7 +204,7 @@
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, orderBy, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, orderBy, deleteDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "%%FIREBASE_API_KEY%%",
@@ -226,6 +226,8 @@ window._fsOnSnapshot = onSnapshot;
 window._fsQuery = query;
 window._fsOrderBy = orderBy;
 window._fsDeleteDoc = deleteDoc;
+window._fsUpdateDoc = updateDoc;
+window._fsDoc = doc;
 window._fsGetDocs = getDocs;
 window._firebaseReady = true;
 window.dispatchEvent(new Event('firebaseReady'));
@@ -1202,8 +1204,7 @@ async function updateAllDates(btn) {
 async function deleteGame(gameId) {
   if (!confirm('למחוק את המשחק הזה לגמרי? הפעולה לא הפיכה.')) return;
   try {
-    const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-    await deleteDoc(doc(db, 'games', String(gameId)));
+    await window._fsDeleteDoc(window._fsDoc(db, 'games', String(gameId)));
     GAMES = GAMES.filter(g => g.id !== gameId);
     renderAdminContent();
     render();
@@ -1251,8 +1252,7 @@ async function saveEditGameTeams(gameId, btn) {
   const newAway = parseInt(document.getElementById('editAway').value);
   if (newHome === newAway) { alert('קבוצת החוץ והבית לא יכולות להיות זהות'); return; }
   try {
-    const { updateDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-    await updateDoc(doc(db, 'games', String(gameId)), { home: newHome, away: newAway });
+    await window._fsUpdateDoc(window._fsDoc(db, 'games', String(gameId)), { home: newHome, away: newAway });
     const g = GAMES.find(x => x.id === gameId);
     if (g) { g.home = newHome; g.away = newAway; }
     btn.closest('div[style*=fixed]').remove();
