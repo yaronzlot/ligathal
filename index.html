@@ -1461,7 +1461,22 @@ function renderAdminUsers() {
   });
   const duplicates = Object.values(byName).filter(arr => arr.length > 1);
 
-  let html = `<div style="font-size:13px;color:#ffffff66;margin-bottom:16px;line-height:1.6">ניהול משתמשים רשומים. ניתן למזג כפולים (מעביר ניחושים ונקודות) או למחוק משתמש.</div>`;
+  let html = `<div style="font-size:13px;color:#ffffff66;margin-bottom:16px;line-height:1.6">ניהול משתמשים רשומים. ניתן למזג כפולים (מעביר ניחושים ונקודות) או למחוק משתמש.</div>
+
+  <div style="background:#1a1200;border-radius:14px;border:1px solid #ffd70033;padding:14px;margin-bottom:16px">
+    <div style="font-size:14px;font-weight:800;color:#ffd700;margin-bottom:10px">🎁 הוסף נקודות בונוס לכולם</div>
+    <div style="font-size:12px;color:#ffffff66;margin-bottom:10px">הוסף נקודות לכל המשתמשים בבת אחת (למשל תיקון שגיאה)</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="bonusPointsInput" type="number" min="1" max="50" value="3" placeholder="נקודות"
+        style="flex:1;padding:10px;border-radius:10px;border:1px solid #ffd70033;background:#ffffff08;color:#fff;font-size:14px;font-weight:700;text-align:center;font-family:inherit" />
+      <input id="bonusReasonInput" type="text" placeholder="סיבה (רשות)"
+        style="flex:2;padding:10px;border-radius:10px;border:1px solid #ffd70033;background:#ffffff08;color:#fff;font-size:12px;font-family:inherit" />
+    </div>
+    <button onclick="addBonusToAll()"
+      style="width:100%;margin-top:10px;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
+      ➕ הוסף לכולם
+    </button>
+  </div>`;`;
 
   if (duplicates.length > 0) {
     html += `<div style="background:#1a1200;border-radius:14px;border:1px solid #ffd70033;padding:14px;margin-bottom:16px">
@@ -1509,6 +1524,31 @@ function renderAdminUsers() {
     </div>`;
   });
   return html;
+}
+
+async function addBonusToAll() {
+  const pts = parseInt(document.getElementById('bonusPointsInput').value);
+  const reason = document.getElementById('bonusReasonInput').value.trim();
+  if (!pts || pts < 1) { showToast('הכנס מספר נקודות תקין', '#f87171'); return; }
+  const msg = reason
+    ? `להוסיף ${pts} נקודות לכל ${leaderboard.length} המשתמשים?
+סיבה: ${reason}`
+    : `להוסיף ${pts} נקודות לכל ${leaderboard.length} המשתמשים?`;
+  if (!confirm(msg)) return;
+
+  try {
+    let count = 0;
+    for (const u of leaderboard) {
+      const newPoints = (u.points || 0) + pts;
+      await window._fsUpdateDoc(window._fsDoc(window._db, 'users', u.id), { points: newPoints });
+      count++;
+    }
+    showToast(`✅ נוספו ${pts} נקודות ל-${count} משתמשים!`, '#22c55e');
+    await loadMyDataFromFirebase();
+    renderAdminContent();
+  } catch(e) {
+    showToast('שגיאה: ' + e.message, '#f87171');
+  }
 }
 
 async function mergeUsers(mainId, duplicateIds) {
