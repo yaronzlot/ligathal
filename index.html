@@ -1470,8 +1470,8 @@ function renderAdminUsers() {
     <div style="font-size:14px;font-weight:800;color:#22c55e;margin-bottom:6px">🎯 הוסף ניחוש נכון לכולם</div>
     <div style="font-size:12px;color:#ffffff55;margin-bottom:10px">מוסיף ניחוש + 3 נקודות למי שעוד לא ניחש</div>
     <div style="display:flex;gap:8px">
-      <button onclick="addPredictionToAll(39,'home')" style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid #22c55e44;background:#22c55e15;color:#22c55e;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✅ משחק 39<br>הפועל ת"א ניצחה</button>
-      <button onclick="addPredictionToAll(41,'away')" style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid #22c55e44;background:#22c55e15;color:#22c55e;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✅ משחק 41<br>הפועל ת"א ניצחה</button>
+      <button onclick="addPredictionToAll(39,'away')" style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid #22c55e44;background:#22c55e15;color:#22c55e;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✅ משחק 39<br>הפועל ת"א ניצחה</button>
+      <button onclick="addPredictionToAll(41,'home')" style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid #22c55e44;background:#22c55e15;color:#22c55e;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✅ משחק 41<br>הפועל ת"א ניצחה</button>
     </div>
   </div>`;
 
@@ -1615,31 +1615,33 @@ async function addBonusToAll() {
 }
 
 async function addPredictionToAll(gameId, winningSide) {
-  // winningSide: 'home' or 'away'
-  // For game 39: home=הפועל ת"א (winner), away=מכבי ראשל"צ
-  // For game 41: home=מכבי ראשל"צ, away=הפועל ת"א (winner)
   const game = GAMES.find(g => g.id === gameId);
   if (!game) { showToast('משחק לא נמצא', '#f87171'); return; }
   const winnerTeam = getTeam(winningSide === 'home' ? game.home : game.away);
-  if (!confirm(`להוסיף ניחוש נכון על ${winnerTeam.short} ל-${leaderboard.length} משתמשים?`)) return;
+  if (!confirm(`לעדכן ניחוש על ${winnerTeam.short} ל-${leaderboard.length} משתמשים?\n(מחליף ניחוש קיים אם היה שגוי)`)) return;
   try {
-    let count = 0;
+    let added = 0, fixed = 0;
     for (const u of leaderboard) {
       const preds = u.predictions || {};
-      // Only add if they didn't already predict this game
-      if (!preds[gameId]) {
-        const newPreds = { ...preds, [gameId]: winningSide };
-        const newPoints = (u.points || 0) + 3;
-        const newCorrect = (u.correct || 0) + 1;
-        await window._fsUpdateDoc(window._fsDoc(window._db, 'users', u.id), {
-          predictions: newPreds,
-          points: newPoints,
-          correct: newCorrect
-        });
-        count++;
+      const existing = preds[gameId];
+      const newPreds = { ...preds, [gameId]: winningSide };
+      let pointsDelta = 0, correctDelta = 0;
+      if (!existing) {
+        // No prediction — add correct one + points
+        pointsDelta = 3; correctDelta = 1; added++;
+      } else if (existing !== winningSide) {
+        // Wrong prediction — fix it + add points
+        pointsDelta = 3; correctDelta = 1; fixed++;
+      } else {
+        continue; // Already correct, skip
       }
+      await window._fsUpdateDoc(window._fsDoc(window._db, 'users', u.id), {
+        predictions: newPreds,
+        points: (u.points||0) + pointsDelta,
+        correct: (u.correct||0) + correctDelta
+      });
     }
-    showToast(`✅ נוסף ניחוש נכון ל-${count} משתמשים!`, '#22c55e');
+    showToast(`✅ נוסף ל-${added} | תוקן ל-${fixed} משתמשים`, '#22c55e');
     await loadMyDataFromFirebase();
     renderAdminContent();
   } catch(e) {
