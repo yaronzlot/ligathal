@@ -1466,6 +1466,34 @@ function renderAdminUsers() {
 
   let html = `<div style="font-size:13px;color:#ffffff66;margin-bottom:16px;line-height:1.6">ניהול משתמשים רשומים. ניתן למזג כפולים (מעביר ניחושים ונקודות) או למחוק משתמש.</div>`;
 
+  html += `<div style="background:#0a1a0a;border-radius:14px;border:1px solid #22c55e33;padding:14px;margin-bottom:12px">
+    <div style="font-size:14px;font-weight:800;color:#22c55e;margin-bottom:6px">🎯 הוסף ניחוש נכון לכולם</div>
+    <div style="font-size:12px;color:#ffffff55;margin-bottom:10px">מוסיף ניחוש + 3 נקודות למי שעוד לא ניחש</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="addPredictionToAll(39,'home')" style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid #22c55e44;background:#22c55e15;color:#22c55e;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✅ משחק 39<br>הפועל ת"א ניצחה</button>
+      <button onclick="addPredictionToAll(41,'away')" style="flex:1;padding:10px 4px;border-radius:10px;border:1px solid #22c55e44;background:#22c55e15;color:#22c55e;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✅ משחק 41<br>הפועל ת"א ניצחה</button>
+    </div>
+  </div>`;
+
+  html += `<div style="background:#1a1200;border-radius:14px;border:1px solid #ffd70033;padding:14px;margin-bottom:16px">
+    <div style="font-size:14px;font-weight:800;color:#ffd700;margin-bottom:8px">🎁 הוסף נקודות בונוס לכולם</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input id="bonusAmt" type="number" min="1" max="99" value="3" style="width:70px;padding:8px;border-radius:8px;border:1px solid #ffd70033;background:#ffffff08;color:#fff;font-size:16px;font-weight:700;text-align:center;font-family:inherit">
+      <input id="bonusReason" type="text" placeholder="סיבה (רשות)" style="flex:1;padding:8px;border-radius:8px;border:1px solid #ffd70033;background:#ffffff08;color:#fff;font-size:12px;font-family:inherit">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <label style="color:#ffffff88;font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="bonusAddCorrect" onchange="document.getElementById('bonusCorrectRow').style.display=this.checked?'flex':'none'"> גם עדכן ניחושים נכונים
+      </label>
+    </div>
+    <div id="bonusCorrectRow" style="display:none;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="color:#ffffff66;font-size:12px">+</span>
+      <input id="bonusCorrectCount" type="number" min="1" max="20" value="2" style="width:60px;padding:8px;border-radius:8px;border:1px solid #ffd70033;background:#ffffff08;color:#fff;font-size:14px;font-weight:700;text-align:center;font-family:inherit">
+      <span style="color:#ffffff66;font-size:12px">ניחושים נכונים לכל משתמש</span>
+    </div>
+    <button onclick="addBonusToAll()" style="width:100%;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">➕ הוסף לכולם</button>
+  </div>`;
+
   if (duplicates.length > 0) {
     html += `<div style="background:#1a1200;border-radius:14px;border:1px solid #ffd70033;padding:14px;margin-bottom:16px">
       <div style="font-size:14px;font-weight:800;color:#ffd700;margin-bottom:12px">⚠️ משתמשים כפולים (${duplicates.length} קבוצות)</div>`;
@@ -1557,6 +1585,65 @@ async function mergeUsers(mainId, duplicateIds) {
   } catch(e) {
     console.error(e);
     showToast('שגיאה במיזוג: ' + e.message, '#f87171');
+  }
+}
+
+async function addBonusToAll() {
+  const pts = parseInt(document.getElementById('bonusAmt').value);
+  if (!pts || pts < 1) { showToast('הכנס מספר תקין', '#f87171'); return; }
+  const reason = document.getElementById('bonusReason').value.trim();
+  const addCorrect = document.getElementById('bonusAddCorrect').checked;
+  const correctCount = addCorrect ? parseInt(document.getElementById('bonusCorrectCount').value || '1') : 0;
+  const msg = `להוסיף ${pts} נקודות ל-${leaderboard.length} משתמשים?` +
+    (addCorrect ? `
+גם +${correctCount} ניחושים נכונים` : '') +
+    (reason ? `
+סיבה: ${reason}` : '');
+  if (!confirm(msg)) return;
+  try {
+    for (const u of leaderboard) {
+      const update = { points: (u.points||0) + pts };
+      if (addCorrect) update.correct = (u.correct||0) + correctCount;
+      await window._fsUpdateDoc(window._fsDoc(window._db, 'users', u.id), update);
+    }
+    showToast(`✅ נוספו ${pts} נקודות ל-${leaderboard.length} משתמשים!`, '#22c55e');
+    await loadMyDataFromFirebase();
+    renderAdminContent();
+  } catch(e) {
+    showToast('שגיאה: ' + e.message, '#f87171');
+  }
+}
+
+async function addPredictionToAll(gameId, winningSide) {
+  // winningSide: 'home' or 'away'
+  // For game 39: home=הפועל ת"א (winner), away=מכבי ראשל"צ
+  // For game 41: home=מכבי ראשל"צ, away=הפועל ת"א (winner)
+  const game = GAMES.find(g => g.id === gameId);
+  if (!game) { showToast('משחק לא נמצא', '#f87171'); return; }
+  const winnerTeam = getTeam(winningSide === 'home' ? game.home : game.away);
+  if (!confirm(`להוסיף ניחוש נכון על ${winnerTeam.short} ל-${leaderboard.length} משתמשים?`)) return;
+  try {
+    let count = 0;
+    for (const u of leaderboard) {
+      const preds = u.predictions || {};
+      // Only add if they didn't already predict this game
+      if (!preds[gameId]) {
+        const newPreds = { ...preds, [gameId]: winningSide };
+        const newPoints = (u.points || 0) + 3;
+        const newCorrect = (u.correct || 0) + 1;
+        await window._fsUpdateDoc(window._fsDoc(window._db, 'users', u.id), {
+          predictions: newPreds,
+          points: newPoints,
+          correct: newCorrect
+        });
+        count++;
+      }
+    }
+    showToast(`✅ נוסף ניחוש נכון ל-${count} משתמשים!`, '#22c55e');
+    await loadMyDataFromFirebase();
+    renderAdminContent();
+  } catch(e) {
+    showToast('שגיאה: ' + e.message, '#f87171');
   }
 }
 
